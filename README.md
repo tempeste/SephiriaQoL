@@ -15,10 +15,20 @@ active charm levels and tablet bonuses, rearranges only the requesting player's
 inventory, and can rotate tablets. Start with one pass; additional passes search
 more layouts but can briefly pause the game.
 
-This repository intentionally excludes gameplay-altering mods, progression unlocks, save manipulation,
-and the private `SephiriaSoloMod` project. Third-party mod binaries and decompiler output
-are also excluded; implementations here are maintained independently against the game's
-public runtime types and observed behavior.
+This repository intentionally excludes private gameplay-altering projects,
+progression/save manipulation, third-party mod binaries, and decompiler output.
+Implementations here are maintained independently against the game's runtime APIs
+and observed behavior.
+
+## Prerequisites
+
+- A legal Steam installation of Sephiria using the Mono scripting backend
+- BepInEx 5 for Unity Mono initialized in the Sephiria game directory
+- .NET SDK 8 or newer when building from source
+- A game version compatible with the referenced runtime API (last validated on
+  Sephiria 1.0.27)
+
+MelonLoader is not used or required.
 
 ## Building
 
@@ -31,6 +41,28 @@ dotnet build .\src\SephiriaQoL\SephiriaQoL.csproj -c Release
 ```
 
 Copy `SephiriaQoL.dll` to `BepInEx\plugins`.
+
+## Install and run on Windows
+
+1. Close Sephiria.
+2. Build the project or obtain a trusted build.
+3. Copy `SephiriaQoL.dll` to
+   `E:\SteamLibrary\steamapps\common\Sephiria\BepInEx\plugins\` (adjust for
+   your Steam library).
+4. Keep native third-party add-ons such as MaxPlayer in Sephiria's `AddOns`
+   directory; do not copy their DLLs into this repository.
+5. Start Sephiria normally through Steam.
+6. Confirm `Loading [Sephiria QoL` and, when applicable, `Loaded 1 native
+   AddOn(s)` appear in `BepInEx/LogOutput.log`.
+
+The tablet optimizer is controlled with `F10`. It changes only the requesting
+player's inventory, but it rearranges the whole inventory rather than tablets
+alone. Start with one pass and wait for the inventory to settle before clicking
+again.
+
+Configuration is stored in
+`BepInEx/config/dev.tempeste.sephiria.qol.cfg`. Delete only that configuration
+file to restore defaults; it will be recreated on the next launch.
 
 ## macOS
 
@@ -54,3 +86,23 @@ anything. `dotnet` SDK 8 or newer is required to build the plugin.
 Utility, JustAnvil, journal search, and the tablet optimizer are expected to be
 portable. MaxPlayer_16 consists of managed assemblies but remains unverified on
 macOS; install and test it separately after the base QoL plugin works.
+
+## Troubleshooting
+
+- No `BepInEx/LogOutput.log`: BepInEx itself did not initialize; fix the loader
+  before debugging this plugin.
+- Plugin is absent from the log: confirm the DLL is directly under
+  `BepInEx/plugins` and that only the BepInEx build is installed.
+- Overlays are missing during a cinematic: full-screen game UI can cover IMGUI;
+  check again after normal control resumes.
+- Build references are missing: set `SEPHIRIA_GAME_DIR`, or set
+  `SEPHIRIA_MANAGED_DIR` directly to the game's `Managed` directory.
+- Behavior changes after a Sephiria update: compare the affected runtime member
+  names/signatures before changing Harmony patches.
+
+## Development
+
+Read [`AGENTS.md`](AGENTS.md) before modifying hooks, add-on bootstrapping, or
+deployment behavior. It contains the architecture map, repository boundaries,
+validation checklist, and release workflow intended for both humans and coding
+agents.
