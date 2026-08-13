@@ -9,7 +9,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.2.2";
+    public const string PluginVersion = "0.3.0";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;
@@ -35,7 +35,7 @@ public sealed class Plugin : BaseUnityPlugin
         ConfigEntry<bool> allowTabletRotation = Config.Bind("TabletOptimizer", "AllowTabletRotation", true,
             "Allows the optimizer to rotate tablets when that improves the layout.");
         ConfigEntry<bool> preferConditionalSynergies = Config.Bind("TabletOptimizer", "PreferConditionalSynergies", true,
-            "Rewards satisfied positional relic conditions, including Needles and left/right Grimoire supports.");
+            "Rewards satisfied positional relic conditions and damage-producing artifact links.");
 
         UtilityOverlay.Configure(showTimer, showDamage);
         JournalSearch.Configure(journalSearch);

@@ -14,7 +14,7 @@ internal static class ConditionalSynergyScoring
     private const float ScorePerDamagePercent = 20_000f;
     private const float ScorePerSupportPercent = 10_000f;
     private const float ValidLinkBonus = 100_000f;
-    private const float DormantLinkBonus = 10_000f;
+    private const float UtilityLinkBonus = 60_000f;
 
     private static ConfigEntry<bool> _enabled;
 
@@ -26,6 +26,9 @@ internal static class ConditionalSynergyScoring
     {
         if (_enabled?.Value != true || __instance == null || __instance.charms == null)
             return;
+
+        var scoredPlanets = new HashSet<int>();
+        var scoredChaoticCompanions = new HashSet<int>();
 
         foreach (Charm_Basic charm in __instance.charms.Values)
         {
@@ -48,6 +51,61 @@ internal static class ConditionalSynergyScoring
                     int reductionPercent = GetLevelValue(starFragment, starFragment.reducePercentByLevel);
                     __result += ScoreLink(starFragment.IsEffectEnabled, reductionPercent, ScorePerSupportPercent);
                     break;
+
+                case Charm_AutoMagic autoMagic when HasBoltBelow(__instance, autoMagic):
+                    float cooldown = GetLevelValue(autoMagic, autoMagic.cooldownByLevel);
+                    float castsPerTenSeconds = cooldown > 0f ? 10f / cooldown : 0f;
+                    __result += ScoreLink(autoMagic.IsEffectEnabled,
+                        Mathf.RoundToInt(castsPerTenSeconds * 10f), ScorePerSupportPercent);
+                    break;
+
+                case Charm_NearLevelDamage nearLevel:
+                    int adjacentDamage = GetAdjacentLevelDamage(__instance, nearLevel);
+                    if (adjacentDamage > 0)
+                        __result += ScoreLink(nearLevel.IsEffectEnabled, adjacentDamage, ScorePerDamagePercent);
+                    break;
+
+                case Charm_NearMagicBullet fireworks:
+                    int magicCount = CountMagicInColumn(__instance, fireworks.xIdx);
+                    if (magicCount > 0)
+                    {
+                        int fireworkDamage = GetLevelValue(fireworks, fireworks.damagePercentByLevel);
+                        // Every connected Grimoire can trigger the effect and each hit
+                        // emits one firework per connected Grimoire.
+                        int effectiveDamage = fireworkDamage * magicCount * magicCount;
+                        __result += ScoreLink(fireworks.IsEffectEnabled, effectiveDamage, ScorePerDamagePercent);
+                    }
+                    break;
+
+                case Charm_PlanetModule planetModule when planetModule.IsEffectEnabled:
+                    int enhancedPlanetDamage = GetAdjacentPlanetDamage(
+                        __instance, planetModule, scoredPlanets);
+                    if (enhancedPlanetDamage > 0)
+                        __result += ScoreLink(true,
+                            Mathf.RoundToInt(enhancedPlanetDamage * 0.5f), ScorePerDamagePercent);
+                    break;
+
+                case Charm_CompanionChaos chaos when chaos.IsEffectEnabled:
+                    int companionCount = CountCompanionsInRow(
+                        __instance, chaos.yIdx, scoredChaoticCompanions);
+                    if (companionCount > 0)
+                        __result += UtilityLinkBonus * companionCount;
+                    break;
+
+                case Charm_WhitePaper whitePaper when HasMatchingAdjacentCategories(__instance, whitePaper):
+                    if (whitePaper.IsEffectEnabled)
+                        __result += ValidLinkBonus;
+                    break;
+
+                case Charm_WoodenBox woodenBox:
+                    int topRowCharms = CountTopRowCharms(__instance);
+                    if (topRowCharms > 0)
+                    {
+                        int elementalDamage = GetLevelValue(woodenBox, woodenBox.apPerQuickSlotCharmByLevel) *
+                                              topRowCharms * 3;
+                        __result += ScoreLink(woodenBox.IsEffectEnabled, elementalDamage, ScorePerDamagePercent);
+                    }
+                    break;
             }
         }
     }
@@ -56,7 +114,120 @@ internal static class ConditionalSynergyScoring
     {
         return enabled
             ? ValidLinkBonus + Mathf.Max(0, percent) * scorePerPercent
-            : DormantLinkBonus;
+            : 0f;
+    }
+
+    private static bool HasBoltBelow(GridInventory inventory, Charm_AutoMagic autoMagic)
+    {
+        if (!TryGetMagic(inventory, autoMagic.xIdx, autoMagic.yIdx + 1, out Charm_Magic magic) ||
+            magic.ContainedMagic == null || magic.ContainedMagic.magicPrefab == null)
+            return false;
+
+        return magic.ContainedMagic.magicPrefab.GetComponent<ActiveSkill>() is ActiveSkill_Bolt;
+    }
+
+    private static int GetAdjacentLevelDamage(GridInventory inventory, Charm_NearLevelDamage origin)
+    {
+        int level = Mathf.Clamp(origin.CurrentLevelToIdx(), 0,
+            Mathf.Max(0, origin.allDamageBonusByLevel.Length - 1));
+        float damagePerLevel = origin.allDamageBonusByLevel.Length == 0
+            ? 0f
+            : origin.allDamageBonusByLevel[level];
+        int adjacentLevels = 0;
+
+        for (int x = -1; x <= 1; x++)
+        for (int y = -1; y <= 1; y++)
+        {
+            if (x == 0 && y == 0)
+                continue;
+
+            Charm_Basic neighbor = FindCharm(inventory, origin.xIdx + x, origin.yIdx + y);
+            if (neighbor != null)
+                adjacentLevels += Mathf.Min(neighbor.DisplayedLevel, neighbor.maxLevel);
+        }
+
+        return Mathf.FloorToInt(Mathf.Max(0f, damagePerLevel * adjacentLevels));
+    }
+
+    private static int CountMagicInColumn(GridInventory inventory, int x)
+    {
+        int count = 0;
+        for (int y = 0; y < inventory.Height; y++)
+        {
+            if (FindCharm(inventory, x, y) is Charm_Magic)
+                count++;
+        }
+        return count;
+    }
+
+    private static int GetAdjacentPlanetDamage(
+        GridInventory inventory,
+        Charm_PlanetModule origin,
+        HashSet<int> scoredPlanets)
+    {
+        int damage = 0;
+        for (int x = -1; x <= 1; x++)
+        for (int y = -1; y <= 1; y++)
+        {
+            if (x == 0 && y == 0)
+                continue;
+
+            if (FindCharm(inventory, origin.xIdx + x, origin.yIdx + y) is Charm_SummonGreenBat planet &&
+                scoredPlanets.Add(planet.GetInstanceID()))
+                damage += GetLevelValue(planet, planet.damageByLevel);
+        }
+        return damage;
+    }
+
+    private static int CountCompanionsInRow(
+        GridInventory inventory,
+        int y,
+        HashSet<int> scoredCompanions)
+    {
+        int count = 0;
+        for (int x = 0; x < inventory.Width; x++)
+        {
+            if (FindCharm(inventory, x, y) is Charm_Basic companion &&
+                companion is ICompanionCharm && scoredCompanions.Add(companion.GetInstanceID()))
+                count++;
+        }
+        return count;
+    }
+
+    private static int CountTopRowCharms(GridInventory inventory)
+    {
+        int count = 0;
+        int slots = Mathf.Min(6, inventory.CurrentInventoryStorage);
+        for (int index = 0; index < slots; index++)
+        {
+            NewItemOwnInstance item = inventory.FindItem(inventory.IdxToPos(index));
+            if (item?.Entity != null && item.Entity.type == EItemType.Charm)
+                count++;
+        }
+        return count;
+    }
+
+    private static bool HasMatchingAdjacentCategories(GridInventory inventory, Charm_WhitePaper paper)
+    {
+        Charm_Basic left = FindCharm(inventory, paper.xIdx - 1, paper.yIdx);
+        Charm_Basic right = FindCharm(inventory, paper.xIdx + 1, paper.yIdx);
+        if (left == null || right == null)
+            return false;
+
+        var leftCategories = new HashSet<string>(left.GetItemCategory());
+        foreach (string category in right.GetItemCategory())
+        {
+            if (!string.IsNullOrEmpty(category) && leftCategories.Contains(category))
+                return true;
+        }
+        return false;
+    }
+
+    private static Charm_Basic FindCharm(GridInventory inventory, int x, int y)
+    {
+        if (x < 0 || x >= inventory.Width || y < 0 || y >= inventory.Height)
+            return null;
+        return inventory.FindItem(new ItemPosition((sbyte)x, (sbyte)y))?.Charm;
     }
 
     private static bool TryGetMagic(
@@ -135,6 +306,15 @@ internal static class ConditionalSynergyScoring
     {
         if (values == null || values.Length == 0)
             return 0;
+
+        int index = Mathf.Clamp(charm.CurrentLevelToIdx(), 0, values.Length - 1);
+        return values[index];
+    }
+
+    private static float GetLevelValue(Charm_Basic charm, float[] values)
+    {
+        if (values == null || values.Length == 0)
+            return 0f;
 
         int index = Mathf.Clamp(charm.CurrentLevelToIdx(), 0, values.Length - 1);
         return values[index];

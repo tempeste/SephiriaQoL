@@ -12,12 +12,13 @@ Current scope:
 
 The optimizer exposes Sephiria's own server-authoritative layout routine. It scores
 active charm levels and tablet bonuses, then adds condition-aware scoring for
-positional dependencies. A Needle of the North is rewarded only when its upward
-chain terminates at an artifact that actually deals direct damage. Glowing Hourglass
-is rewarded only with a Grimoire on its right, and Ray's Star Fragment only with a
-Grimoire on its left. It rearranges only the requesting player's inventory and can
-rotate tablets. Start with one pass; additional passes search more layouts but can
-briefly pause the game.
+positional dependencies. It understands Needle chains, left/right Grimoire supports,
+Auto Magic, adjacent-level damage, same-column Grimoire fireworks, adjacent Planet
+enhancement, same-row companions, White Paper category matching, and Wooden Box's
+top-row bonus. Sephiria's own activation pass handles its reusable top/bottom/edge/
+inside/neighbor criteria for every candidate layout. It rearranges only the requesting
+player's inventory and can rotate tablets. Start with one pass; additional passes
+search more layouts but can briefly pause the game.
 
 This repository intentionally excludes private gameplay-altering projects,
 progression/save manipulation, third-party mod binaries, and decompiler output.
@@ -62,9 +63,10 @@ Copy `SephiriaQoL.dll` to `BepInEx\plugins`.
 The tablet optimizer is controlled with `F10`. It changes only the requesting
 player's inventory, but it rearranges the whole inventory rather than tablets
 alone. Keep `Prefer positional relic synergies` enabled to make productive
-Needle-to-damage and Grimoire-support links outrank raw levels on unrelated
-artifacts. Start with one pass and wait for the inventory to settle before
-clicking again.
+damage and support links outrank raw levels on unrelated artifacts. Effects whose
+best side depends on the player's chosen element (such as Fire/Ice conversion relics)
+remain neutral rather than guessing the build. Start with one pass and wait for the
+inventory to settle before clicking again.
 
 Configuration is stored in
 `BepInEx/config/dev.tempeste.sephiria.qol.cfg`. Delete only that configuration

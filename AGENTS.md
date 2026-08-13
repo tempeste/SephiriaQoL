@@ -35,9 +35,11 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
 - `TabletOptimizerOverlay.cs`: F10 UI around Sephiria's own server-authoritative
   inventory auto-arranger. It does not implement a parallel item-mutation path.
 - `ConditionalSynergyScoring.cs`: registry that extends the native candidate score
-  for validated positional dependencies. It currently understands chained Needles
-  of the North, Glowing Hourglass, and Ray's Star Fragment using runtime types,
-  offsets, current levels, and prefab-configured percentage arrays.
+  for validated artifact-specific positional dependencies. It covers chained
+  Needles, Grimoire supports, Auto Magic, adjacent-level damage, same-column
+  Grimoire fireworks, adjacent Planets, same-row companions, White Paper, and
+  Wooden Box. The native refresh/scorer remains responsible for tablet queries and
+  reusable `CharmActivateCriteria` components.
 - `NativeAddOnBootstrap.cs`: asks Sephiria's built-in `AddOnLoader` to load native
   `AddOns` when startup ordering caused it to miss them.
 - `Directory.Build.props`: resolves Windows/macOS game and managed-assembly paths.
