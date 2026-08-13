@@ -1,0 +1,22 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+
+# Never place private gameplay-altering work in this repository.
+private/
+private-mods/
+**/*PrivateMod*/
+**/*PrivateMod*.*
+**/*SoloMod*/
+**/*SoloMod*.*
+*.ct
+
+# Third-party binaries are referenced from the local game installation only.
+lib/
+vendor/
+*.dll
+*.zip
+

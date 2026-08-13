@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <SephiriaGameDir Condition="'$(SEPHIRIA_GAME_DIR)' != ''">$(SEPHIRIA_GAME_DIR)</SephiriaGameDir>
+    <SephiriaGameDir Condition="'$(SephiriaGameDir)' == ''">E:\SteamLibrary\steamapps\common\Sephiria</SephiriaGameDir>
+    <ManagedDir>$(SephiriaGameDir)\Sephiria_Data\Managed</ManagedDir>
+  </PropertyGroup>
+</Project>
+
