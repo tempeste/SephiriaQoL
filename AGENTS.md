@@ -42,6 +42,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   reusable `CharmActivateCriteria` components.
 - `NativeAddOnBootstrap.cs`: asks Sephiria's built-in `AddOnLoader` to load native
   `AddOns` when startup ordering caused it to miss them.
+- `docs/CONDITIONALS.md`: audited runtime inventory of reusable criteria,
+  artifact-specific positional effects, neutral build-dependent effects, and the
+  boundary between native tablet scoring and the QoL score postfix.
 - `Directory.Build.props`: resolves Windows/macOS game and managed-assembly paths.
 - `scripts/install-macos.sh`: validates, builds, and installs on macOS after
   BepInEx itself is working.

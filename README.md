@@ -20,6 +20,9 @@ inside/neighbor criteria for every candidate layout. It rearranges only the requ
 player's inventory and can rotate tablets. Start with one pass; additional passes
 search more layouts but can briefly pause the game.
 
+The complete Sephiria 1.0.27 conditional inventory and coverage notes are in
+[`docs/CONDITIONALS.md`](docs/CONDITIONALS.md).
+
 This repository intentionally excludes private gameplay-altering projects,
 progression/save manipulation, third-party mod binaries, and decompiler output.
 Implementations here are maintained independently against the game's runtime APIs
