@@ -9,7 +9,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.2.0";
+    public const string PluginVersion = "0.2.1";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;
@@ -34,13 +34,17 @@ public sealed class Plugin : BaseUnityPlugin
             "Number of improvement passes per click (1-4). More passes can pause the game for longer.");
         ConfigEntry<bool> allowTabletRotation = Config.Bind("TabletOptimizer", "AllowTabletRotation", true,
             "Allows the optimizer to rotate tablets when that improves the layout.");
+        ConfigEntry<bool> preferDamageSynergies = Config.Bind("TabletOptimizer", "PreferDamageSynergies", true,
+            "Rewards productive positional damage links, such as a Needle of the North below a direct-damage artifact.");
 
         UtilityOverlay.Configure(showTimer, showDamage);
         JournalSearch.Configure(journalSearch);
         JustAnvilFeature.Configure(guaranteedAnvil, Logger);
         _utility = new UtilityOverlay();
         _tabletOptimizer = new TabletOptimizerOverlay(
-            showTabletOptimizer, tabletOptimizerHotkey, tabletOptimizerPasses, allowTabletRotation, Logger);
+            showTabletOptimizer, tabletOptimizerHotkey, tabletOptimizerPasses, allowTabletRotation,
+            preferDamageSynergies, Logger);
+        DamageSynergyScoring.Configure(preferDamageSynergies);
 
         _harmony = new Harmony(PluginGuid);
         _harmony.PatchAll();

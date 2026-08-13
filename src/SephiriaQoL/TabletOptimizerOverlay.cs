@@ -12,10 +12,11 @@ internal sealed class TabletOptimizerOverlay
     private readonly ConfigEntry<KeyboardShortcut> _toggleHotkey;
     private readonly ConfigEntry<int> _passes;
     private readonly ConfigEntry<bool> _allowRotation;
+    private readonly ConfigEntry<bool> _preferDamageSynergies;
     private readonly ManualLogSource _logger;
 
     private PlayerAvatar _player;
-    private Rect _windowRect = new Rect(20f, 90f, 330f, 238f);
+    private Rect _windowRect = new Rect(20f, 90f, 330f, 266f);
     private float _nextPlayerLookup;
     private float _nextAllowedRun;
     private float _statusUntil;
@@ -27,12 +28,14 @@ internal sealed class TabletOptimizerOverlay
         ConfigEntry<KeyboardShortcut> toggleHotkey,
         ConfigEntry<int> passes,
         ConfigEntry<bool> allowRotation,
+        ConfigEntry<bool> preferDamageSynergies,
         ManualLogSource logger)
     {
         _showPanel = showPanel;
         _toggleHotkey = toggleHotkey;
         _passes = passes;
         _allowRotation = allowRotation;
+        _preferDamageSynergies = preferDamageSynergies;
         _logger = logger;
         _passes.Value = Mathf.Clamp(_passes.Value, 1, 4);
     }
@@ -78,7 +81,7 @@ internal sealed class TabletOptimizerOverlay
         int charmCount = inventory?.charms?.Count ?? 0;
 
         GUI.Label(new Rect(12f, 28f, 306f, 40f),
-            "Rearranges your whole inventory to maximize active charm levels and tablet bonuses.");
+            "Rearranges your whole inventory to maximize useful damage links, charm levels, and tablet bonuses.");
         GUI.Label(new Rect(12f, 70f, 190f, 22f),
             inventory == null ? "No active player inventory" : $"Tablets: {tabletCount}   Charms: {charmCount}");
 
@@ -94,18 +97,23 @@ internal sealed class TabletOptimizerOverlay
         if (allowRotation != _allowRotation.Value)
             _allowRotation.Value = allowRotation;
 
+        bool preferDamage = GUI.Toggle(new Rect(12f, 128f, 306f, 22f),
+            _preferDamageSynergies.Value, "Prefer damage synergies (Needles → damage)");
+        if (preferDamage != _preferDamageSynergies.Value)
+            _preferDamageSynergies.Value = preferDamage;
+
         bool canRun = inventory != null && charmCount > 0 && Time.unscaledTime >= _nextAllowedRun;
         bool previousEnabled = GUI.enabled;
         GUI.enabled = canRun;
-        if (GUI.Button(new Rect(12f, 132f, 306f, 34f), $"Optimize layout ({_passes.Value} pass{(_passes.Value == 1 ? "" : "es")})"))
+        if (GUI.Button(new Rect(12f, 158f, 306f, 34f), $"Optimize layout ({_passes.Value} pass{(_passes.Value == 1 ? "" : "es")})"))
             Optimize(inventory);
         GUI.enabled = previousEnabled;
 
         string status = Time.unscaledTime <= _statusUntil || inventory == null
             ? _status
             : "Ready. Higher pass counts may briefly pause the game.";
-        GUI.Label(new Rect(12f, 174f, 306f, 42f), status);
-        GUI.Label(new Rect(12f, 214f, 306f, 20f), "Changes only your own inventory; click once and wait.");
+        GUI.Label(new Rect(12f, 200f, 306f, 42f), status);
+        GUI.Label(new Rect(12f, 242f, 306f, 20f), "Changes only your own inventory; click once and wait.");
 
         GUI.DragWindow(new Rect(0f, 0f, _windowRect.width, 25f));
     }
