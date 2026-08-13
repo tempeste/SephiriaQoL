@@ -11,11 +11,13 @@ Current scope:
 - In-game tablet/inventory optimizer panel (F10)
 
 The optimizer exposes Sephiria's own server-authoritative layout routine. It scores
-active charm levels and tablet bonuses, then adds damage-aware scoring for positional
-dependencies. For example, a Needle of the North is rewarded only when its upward
-chain terminates at an artifact that actually deals direct damage. It rearranges only
-the requesting player's inventory and can rotate tablets. Start with one pass;
-additional passes search more layouts but can briefly pause the game.
+active charm levels and tablet bonuses, then adds condition-aware scoring for
+positional dependencies. A Needle of the North is rewarded only when its upward
+chain terminates at an artifact that actually deals direct damage. Glowing Hourglass
+is rewarded only with a Grimoire on its right, and Ray's Star Fragment only with a
+Grimoire on its left. It rearranges only the requesting player's inventory and can
+rotate tablets. Start with one pass; additional passes search more layouts but can
+briefly pause the game.
 
 This repository intentionally excludes private gameplay-altering projects,
 progression/save manipulation, third-party mod binaries, and decompiler output.
@@ -59,9 +61,10 @@ Copy `SephiriaQoL.dll` to `BepInEx\plugins`.
 
 The tablet optimizer is controlled with `F10`. It changes only the requesting
 player's inventory, but it rearranges the whole inventory rather than tablets
-alone. Keep `Prefer damage synergies` enabled to make productive Needle-to-damage
-links outrank raw levels on unrelated artifacts. Start with one pass and wait for
-the inventory to settle before clicking again.
+alone. Keep `Prefer positional relic synergies` enabled to make productive
+Needle-to-damage and Grimoire-support links outrank raw levels on unrelated
+artifacts. Start with one pass and wait for the inventory to settle before
+clicking again.
 
 Configuration is stored in
 `BepInEx/config/dev.tempeste.sephiria.qol.cfg`. Delete only that configuration

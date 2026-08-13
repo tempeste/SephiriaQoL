@@ -5,13 +5,14 @@ using UnityEngine;
 
 namespace SephiriaQoL;
 
-internal static class DamageSynergyScoring
+internal static class ConditionalSynergyScoring
 {
     // A capped charm level contributes 10,000 points to the game's native score.
     // Valuing each real damage-percent point at 20,000 makes a productive Needle
     // link more important than gaining a few irrelevant levels, while still
     // letting tablet levels distinguish layouts with equivalent damage links.
     private const float ScorePerDamagePercent = 20_000f;
+    private const float ScorePerSupportPercent = 10_000f;
     private const float ValidLinkBonus = 100_000f;
     private const float DormantLinkBonus = 10_000f;
 
@@ -28,19 +29,49 @@ internal static class DamageSynergyScoring
 
         foreach (Charm_Basic charm in __instance.charms.Values)
         {
-            if (charm is Charm_UpCharmDamage needle &&
-                TryResolveDamageTarget(__instance, needle, out Charm_Basic target))
+            switch (charm)
             {
-                if (!needle.IsEffectEnabled)
-                {
-                    __result += DormantLinkBonus;
-                    continue;
-                }
+                case Charm_UpCharmDamage needle
+                    when TryResolveDamageTarget(__instance, needle, out Charm_Basic target):
+                    int damagePercent = GetDamagePercent(needle, target);
+                    __result += ScoreLink(needle.IsEffectEnabled, damagePercent, ScorePerDamagePercent);
+                    break;
 
-                int damagePercent = GetDamagePercent(needle, target);
-                __result += ValidLinkBonus + damagePercent * ScorePerDamagePercent;
+                case Charm_RightSpellCooldownHelper hourglass
+                    when TryGetMagic(__instance, hourglass.xIdx + 1, hourglass.yIdx, out _):
+                    int hastePercent = GetLevelValue(hourglass, hourglass.cooldownRecoveryByLevel);
+                    __result += ScoreLink(hourglass.IsEffectEnabled, hastePercent, ScorePerSupportPercent);
+                    break;
+
+                case Charm_ReduceMPCost starFragment
+                    when TryGetMagic(__instance, starFragment.xIdx - 1, starFragment.yIdx, out _):
+                    int reductionPercent = GetLevelValue(starFragment, starFragment.reducePercentByLevel);
+                    __result += ScoreLink(starFragment.IsEffectEnabled, reductionPercent, ScorePerSupportPercent);
+                    break;
             }
         }
+    }
+
+    private static float ScoreLink(bool enabled, int percent, float scorePerPercent)
+    {
+        return enabled
+            ? ValidLinkBonus + Mathf.Max(0, percent) * scorePerPercent
+            : DormantLinkBonus;
+    }
+
+    private static bool TryGetMagic(
+        GridInventory inventory,
+        int x,
+        int y,
+        out Charm_Magic magic)
+    {
+        magic = null;
+        if (x < sbyte.MinValue || x > sbyte.MaxValue || y < sbyte.MinValue || y > sbyte.MaxValue)
+            return false;
+
+        NewItemOwnInstance item = inventory.FindItem(new ItemPosition((sbyte)x, (sbyte)y));
+        magic = item?.Charm as Charm_Magic;
+        return magic != null;
     }
 
     private static bool TryResolveDamageTarget(
@@ -85,12 +116,7 @@ internal static class DamageSynergyScoring
 
     private static int GetDamagePercent(Charm_UpCharmDamage needle, Charm_Basic target)
     {
-        int result = 0;
-        if (needle.damageBonusByLevel != null && needle.damageBonusByLevel.Length > 0)
-        {
-            int levelIndex = Mathf.Clamp(needle.CurrentLevelToIdx(), 0, needle.damageBonusByLevel.Length - 1);
-            result = needle.damageBonusByLevel[levelIndex];
-        }
+        int result = GetLevelValue(needle, needle.damageBonusByLevel);
 
         if (!needle.hasDependencyCondition || target?.Item == null ||
             needle.dependencyDamageBonusByLevel == null || needle.dependencyDamageBonusByLevel.Length == 0)
@@ -99,11 +125,18 @@ internal static class DamageSynergyScoring
         ItemEntity targetEntity = ItemDatabase.FindItemById(target.Item.EntityID);
         if (targetEntity != null && targetEntity.rarity <= needle.maxRarity)
         {
-            int dependencyIndex = Mathf.Clamp(
-                needle.CurrentLevelToIdx(), 0, needle.dependencyDamageBonusByLevel.Length - 1);
-            result += needle.dependencyDamageBonusByLevel[dependencyIndex];
+            result += GetLevelValue(needle, needle.dependencyDamageBonusByLevel);
         }
 
         return result;
+    }
+
+    private static int GetLevelValue(Charm_Basic charm, int[] values)
+    {
+        if (values == null || values.Length == 0)
+            return 0;
+
+        int index = Mathf.Clamp(charm.CurrentLevelToIdx(), 0, values.Length - 1);
+        return values[index];
     }
 }

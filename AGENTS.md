@@ -34,9 +34,10 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   while preserving the displaced room later in the floor graph.
 - `TabletOptimizerOverlay.cs`: F10 UI around Sephiria's own server-authoritative
   inventory auto-arranger. It does not implement a parallel item-mutation path.
-- `DamageSynergyScoring.cs`: extends the native candidate score for validated
-  positional damage dependencies, including chained Needles of the North whose
-  final target implements `IAttackableCharm` and reports a real attack.
+- `ConditionalSynergyScoring.cs`: registry that extends the native candidate score
+  for validated positional dependencies. It currently understands chained Needles
+  of the North, Glowing Hourglass, and Ray's Star Fragment using runtime types,
+  offsets, current levels, and prefab-configured percentage arrays.
 - `NativeAddOnBootstrap.cs`: asks Sephiria's built-in `AddOnLoader` to load native
   `AddOns` when startup ordering caused it to miss them.
 - `Directory.Build.props`: resolves Windows/macOS game and managed-assembly paths.
@@ -49,7 +50,7 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
 - Preserve server authority for inventory changes. The optimizer must call
   `RequestAutoArrangeInventoryForBestCharmLevels`; do not force-remove/re-add
   items or directly synthesize inventory entries.
-- Keep damage-awareness in the score postfix rather than adding a second arranger.
+- Keep conditional awareness in the score postfix rather than adding a second arranger.
   Positional dependency chains must reject empty cells, cycles, and non-attackable
   terminal artifacts.
 - Avoid per-frame scene-wide searches. Cache references and poll infrequently to

@@ -9,7 +9,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.2.1";
+    public const string PluginVersion = "0.2.2";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;
@@ -34,8 +34,8 @@ public sealed class Plugin : BaseUnityPlugin
             "Number of improvement passes per click (1-4). More passes can pause the game for longer.");
         ConfigEntry<bool> allowTabletRotation = Config.Bind("TabletOptimizer", "AllowTabletRotation", true,
             "Allows the optimizer to rotate tablets when that improves the layout.");
-        ConfigEntry<bool> preferDamageSynergies = Config.Bind("TabletOptimizer", "PreferDamageSynergies", true,
-            "Rewards productive positional damage links, such as a Needle of the North below a direct-damage artifact.");
+        ConfigEntry<bool> preferConditionalSynergies = Config.Bind("TabletOptimizer", "PreferConditionalSynergies", true,
+            "Rewards satisfied positional relic conditions, including Needles and left/right Grimoire supports.");
 
         UtilityOverlay.Configure(showTimer, showDamage);
         JournalSearch.Configure(journalSearch);
@@ -43,8 +43,8 @@ public sealed class Plugin : BaseUnityPlugin
         _utility = new UtilityOverlay();
         _tabletOptimizer = new TabletOptimizerOverlay(
             showTabletOptimizer, tabletOptimizerHotkey, tabletOptimizerPasses, allowTabletRotation,
-            preferDamageSynergies, Logger);
-        DamageSynergyScoring.Configure(preferDamageSynergies);
+            preferConditionalSynergies, Logger);
+        ConditionalSynergyScoring.Configure(preferConditionalSynergies);
 
         _harmony = new Harmony(PluginGuid);
         _harmony.PatchAll();

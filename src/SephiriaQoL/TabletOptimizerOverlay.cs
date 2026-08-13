@@ -12,7 +12,7 @@ internal sealed class TabletOptimizerOverlay
     private readonly ConfigEntry<KeyboardShortcut> _toggleHotkey;
     private readonly ConfigEntry<int> _passes;
     private readonly ConfigEntry<bool> _allowRotation;
-    private readonly ConfigEntry<bool> _preferDamageSynergies;
+    private readonly ConfigEntry<bool> _preferConditionalSynergies;
     private readonly ManualLogSource _logger;
 
     private PlayerAvatar _player;
@@ -28,14 +28,14 @@ internal sealed class TabletOptimizerOverlay
         ConfigEntry<KeyboardShortcut> toggleHotkey,
         ConfigEntry<int> passes,
         ConfigEntry<bool> allowRotation,
-        ConfigEntry<bool> preferDamageSynergies,
+        ConfigEntry<bool> preferConditionalSynergies,
         ManualLogSource logger)
     {
         _showPanel = showPanel;
         _toggleHotkey = toggleHotkey;
         _passes = passes;
         _allowRotation = allowRotation;
-        _preferDamageSynergies = preferDamageSynergies;
+        _preferConditionalSynergies = preferConditionalSynergies;
         _logger = logger;
         _passes.Value = Mathf.Clamp(_passes.Value, 1, 4);
     }
@@ -97,10 +97,10 @@ internal sealed class TabletOptimizerOverlay
         if (allowRotation != _allowRotation.Value)
             _allowRotation.Value = allowRotation;
 
-        bool preferDamage = GUI.Toggle(new Rect(12f, 128f, 306f, 22f),
-            _preferDamageSynergies.Value, "Prefer damage synergies (Needles → damage)");
-        if (preferDamage != _preferDamageSynergies.Value)
-            _preferDamageSynergies.Value = preferDamage;
+        bool preferConditionals = GUI.Toggle(new Rect(12f, 128f, 306f, 22f),
+            _preferConditionalSynergies.Value, "Prefer positional relic synergies");
+        if (preferConditionals != _preferConditionalSynergies.Value)
+            _preferConditionalSynergies.Value = preferConditionals;
 
         bool canRun = inventory != null && charmCount > 0 && Time.unscaledTime >= _nextAllowedRun;
         bool previousEnabled = GUI.enabled;
