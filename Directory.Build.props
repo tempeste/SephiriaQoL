@@ -1,8 +1,9 @@
 <Project>
   <PropertyGroup>
     <SephiriaGameDir Condition="'$(SEPHIRIA_GAME_DIR)' != ''">$(SEPHIRIA_GAME_DIR)</SephiriaGameDir>
-    <SephiriaGameDir Condition="'$(SephiriaGameDir)' == ''">E:\SteamLibrary\steamapps\common\Sephiria</SephiriaGameDir>
-    <ManagedDir>$(SephiriaGameDir)\Sephiria_Data\Managed</ManagedDir>
+    <SephiriaGameDir Condition="'$(SephiriaGameDir)' == '' and '$(OS)' == 'Windows_NT'">E:/SteamLibrary/steamapps/common/Sephiria</SephiriaGameDir>
+    <ManagedDir Condition="'$(SEPHIRIA_MANAGED_DIR)' != ''">$(SEPHIRIA_MANAGED_DIR)</ManagedDir>
+    <ManagedDir Condition="'$(ManagedDir)' == '' and '$(OS)' == 'Windows_NT'">$(SephiriaGameDir)/Sephiria_Data/Managed</ManagedDir>
+    <ManagedDir Condition="'$(ManagedDir)' == '' and '$(OS)' != 'Windows_NT'">$(SephiriaGameDir)/Sephiria.app/Contents/Resources/Data/Managed</ManagedDir>
   </PropertyGroup>
 </Project>
-

@@ -9,39 +9,39 @@
 
   <ItemGroup>
     <Reference Include="BepInEx">
-      <HintPath>$(SephiriaGameDir)\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>$(SephiriaGameDir)/BepInEx/core/BepInEx.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="0Harmony">
-      <HintPath>$(SephiriaGameDir)\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>$(SephiriaGameDir)/BepInEx/core/0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Mirror">
-      <HintPath>$(ManagedDir)\Mirror.dll</HintPath>
+      <HintPath>$(ManagedDir)/Mirror.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+      <HintPath>$(ManagedDir)/UnityEngine.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(ManagedDir)/UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>$(ManagedDir)\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>$(ManagedDir)/UnityEngine.IMGUIModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>$(ManagedDir)/UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>$(ManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>$(ManagedDir)/UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
