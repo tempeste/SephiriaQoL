@@ -9,7 +9,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.4.0";
+    public const string PluginVersion = "0.5.0";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;
@@ -49,6 +49,13 @@ public sealed class Plugin : BaseUnityPlugin
             new KeyboardShortcut(UnityEngine.KeyCode.RightArrow), "Selects the next living player while spectating.");
         ConfigEntry<float> spectatorPanelScale = Config.Bind("Spectator", "PanelScale", 0f,
             "Spectator panel scale from 0.75 to 2.0. Use 0 for automatic Retina-aware sizing.");
+        ConfigEntry<bool> maxPlayerEnabled = Config.Bind("MaxPlayer", "Enabled", true,
+            "Allows hosts to create rooms above Sephiria's vanilla four-player limit.");
+        ConfigEntry<int> maxPlayers = Config.Bind("MaxPlayer", "MaximumPlayers", 16,
+            new ConfigDescription("Maximum host/lobby capacity from 2 to 16 players.",
+                new AcceptableValueRange<int>(2, 16)));
+        ConfigEntry<bool> compactMultiplayerHud = Config.Bind("MaxPlayer", "CompactMultiplayerHud", true,
+            "Scales down Sephiria's multiplayer roster as more players join.");
 
         UtilityOverlay.Configure(showTimer, showDamage, damagePanelScale);
         JournalSearch.Configure(journalSearch);
@@ -60,10 +67,11 @@ public sealed class Plugin : BaseUnityPlugin
         _spectator = new SpectatorFeature(
             spectatorEnabled, spectatorPreviousHotkey, spectatorNextHotkey, spectatorPanelScale);
         ConditionalSynergyScoring.Configure(preferConditionalSynergies);
+        MaxPlayerFeature.Configure(maxPlayerEnabled, maxPlayers, compactMultiplayerHud, Logger);
 
         _harmony = new Harmony(PluginGuid);
         _harmony.PatchAll();
-        Logger.LogInfo("Loaded independent QoL features: run timer, detailed damage contribution, journal search, JustAnvil, tablet optimizer, and spectator mode.");
+        Logger.LogInfo("Loaded independent QoL features: run timer, detailed damage contribution, journal search, JustAnvil, tablet optimizer, spectator mode, and configurable 16-player rooms.");
     }
 
     private void Update()

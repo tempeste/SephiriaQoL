@@ -42,6 +42,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   reusable `CharmActivateCriteria` components.
 - `NativeAddOnBootstrap.cs`: asks Sephiria's built-in `AddOnLoader` to load native
   `AddOns` when startup ordering caused it to miss them.
+- `MaxPlayerFeature.cs`: clean-room 2–16 player support. It expands Sephiria's
+  lobby selector, raises the host's Mirror connection cap, and compacts the native
+  multiplayer HUD without depending on a third-party add-on.
 - `docs/CONDITIONALS.md`: audited runtime inventory of reusable criteria,
   artifact-specific positional effects, neutral build-dependent effects, and the
   boundary between native tablet scoring and the QoL score postfix.
@@ -62,9 +65,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   prevent the stutter seen in earlier experiments.
 - Native add-on loading must remain idempotent. Check `AddOnLoader.LoadedMods`
   before calling `LoadAll`.
-- Do not package MaxPlayer or other third-party binaries. The compatibility layer
-  may load them from the user's `AddOns` directory, but they remain separately
-  sourced and licensed.
+- Do not package the third-party MaxPlayer add-on or other third-party binaries.
+  The compatibility layer may load separately installed `AddOns`, but the built-in
+  `MaxPlayerFeature` must remain an independent implementation.
 - Keep all user-facing toggles in BepInEx configuration and document new keys.
 
 ## Build and validation
@@ -100,8 +103,8 @@ For runtime validation:
 
 Validate BepInEx/Rosetta independently before debugging plugin code. Build against
 the Mac installation's own managed assemblies, then use `scripts/install-macos.sh`.
-Treat MaxPlayer and native ARM loading as unverified until tested on actual Apple
-Silicon hardware.
+Treat the built-in 16-player feature and native ARM loading as unverified until
+tested with a real large lobby on actual Apple Silicon hardware.
 
 ## Release workflow
 

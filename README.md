@@ -12,6 +12,7 @@ Current scope:
 - Journal keyword search
 - In-game tablet/inventory optimizer panel (F10)
 - Multiplayer spectator camera after death
+- Configurable 2–16 player rooms with a compact large-party HUD
 
 The damage chart and tablet optimizer have independent `− / AUTO / +` scale
 controls in their headers. Click the percentage to restore automatic sizing. Auto
@@ -36,27 +37,78 @@ progression/save manipulation, third-party mod binaries, and decompiler output.
 Implementations here are maintained independently against the game's runtime APIs
 and observed behavior.
 
-## Prerequisites
+## One-command setup
+
+Friends do not need to hunt down individual mod files. Clone this repository and
+run the installer for the current platform. It installs the pinned BepInEx release
+when needed, then builds and installs the single `SephiriaQoL.dll` containing the
+QoL, spectator, and 16-player features.
+
+The installers verify the BepInEx download with a committed SHA-256 hash. This
+repository does not copy or redistribute third-party mod binaries.
+
+Prerequisites:
 
 - A legal Steam installation of Sephiria using the Mono scripting backend
-- BepInEx 5 for Unity Mono initialized in the Sephiria game directory
-- .NET SDK 8 or newer when building from source
+- Git and .NET SDK 8 or newer
 - A game version compatible with the referenced runtime API (last validated on
   Sephiria 1.0.27)
 
-MelonLoader is not used or required.
+MelonLoader is not used or required. The spectator feature is already part of
+`SephiriaQoL.dll`; do not install the upstream MelonLoader `Spectator.dll`.
 
-## Building
+### Windows
 
-The project references assemblies from the local Sephiria installation. By default it
-uses `E:\SteamLibrary\steamapps\common\Sephiria`. Override that path with the
-`SEPHIRIA_GAME_DIR` environment variable if needed.
+Close Sephiria, then run in PowerShell:
 
 ```powershell
-dotnet build .\src\SephiriaQoL\SephiriaQoL.csproj -c Release
+git clone https://github.com/tempeste/SephiriaQoL.git
+cd SephiriaQoL
+powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 ```
 
-Copy `SephiriaQoL.dll` to `BepInEx\plugins`.
+The script detects the normal Steam location plus common `D:` and `E:` Steam
+libraries. For another location:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 `
+  -GameDir "F:\SteamLibrary\steamapps\common\Sephiria"
+```
+
+Launch Sephiria normally through Steam afterward.
+
+### macOS
+
+Close Sephiria, then run in Terminal:
+
+```bash
+git clone https://github.com/tempeste/SephiriaQoL.git
+cd SephiriaQoL
+./scripts/install-macos.sh
+```
+
+For a non-default Steam library, pass the Sephiria directory:
+
+```bash
+./scripts/install-macos.sh "/Volumes/Games/steamapps/common/Sephiria"
+```
+
+The script prints the exact Steam launch option to paste into
+**Sephiria → Properties → General → Launch Options**. It looks like:
+
+```text
+"/Users/YOU/Library/Application Support/Steam/steamapps/common/Sephiria/run_bepinex.sh" %command%
+```
+
+Then launch Sephiria through Steam. The official BepInEx 5.4.23.5 macOS package
+is universal; its launcher handles the appropriate game architecture on Intel and
+Apple Silicon.
+
+### Confirm it loaded
+
+After one launch, check `BepInEx/LogOutput.log` for
+`Loading [Sephiria QoL 0.5.0]`. The plugin's next line lists its enabled QoL,
+spectator, and 16-player features.
 
 ## Who needs each mod?
 
@@ -67,38 +119,13 @@ Copy `SephiriaQoL.dll` to `BepInEx\plugins`.
 | Spectator camera | Not required | Only the player who wants to spectate after dying | Camera selection and controls are local. |
 | JustAnvil | Required to change the shared run | Not required | Remote clients are explicitly skipped; the host owns the floor graph. |
 | Native add-on bootstrap | Not required | Only machines loading native `AddOns` | This only repairs local add-on startup ordering. |
-| MaxPlayer_16 | Required for rooms above the vanilla limit | Optional | The host patches Steam/Mirror slot limits. Client installation adds the expanded party-list UI and also lets that player host larger rooms. |
+| 16-player rooms | Required for rooms above the vanilla limit | Optional | The host owns the lobby and network limit. Clients get the compact large-party HUD and can host larger rooms themselves when installed. |
 
 There are no QoL features that must be installed by every player. For the most
-consistent UI in a 5–16 player room, install MaxPlayer_16 on everyone, but only the
+consistent UI in a 5–16 player room, install Sephiria QoL on everyone, but only the
 host is required for the larger capacity.
 
-## Install and run on Windows
-
-1. Close Sephiria.
-2. Download BepInEx 5.4.23.5 for Windows x64 from the official BepInEx release
-   and extract it into the Sephiria game directory, alongside `Sephiria.exe`.
-3. Start the game once and close it after `BepInEx/LogOutput.log` is created.
-4. Build this project or obtain a trusted `SephiriaQoL.dll`, then copy it to
-   `Sephiria/BepInEx/plugins/`.
-5. Start Sephiria normally through Steam.
-6. Confirm `Loading [Sephiria QoL` and, when applicable, `Loaded 1 native
-   AddOn(s)` appear in `BepInEx/LogOutput.log`.
-
-### MaxPlayer_16 on Windows
-
-1. Download `MaxPlayer_16.zip` from
-   [Sephiria-Mods-By-KimJangee](https://github.com/TaeHyun015/Sephiria-Mods-By-KimJangee/).
-2. Extract the archive as `Sephiria/AddOns/MaxPlayer_16/`. The resulting folder
-   must directly contain `metadata.json`, `HarmonyBase.dll`, `SetMaxPlayer.dll`,
-   and `Libs/`—not another nested `MaxPlayer_16` folder.
-3. Launch the game and look for `[AddOnLoader] ... MaxPlayer_16` in the log.
-
-Do not put MaxPlayer's DLLs in `BepInEx/plugins`. It is a separately licensed
-native Sephiria add-on and is intentionally not distributed by this repository.
-The upstream standalone `Spectator.dll` is a MelonLoader mod; this project provides
-an independent BepInEx spectator implementation, so do not install that DLL or a
-second mod loader.
+## Usage and configuration
 
 The tablet optimizer is controlled with `F10`. It changes only the requesting
 player's inventory, but it rearranges the whole inventory rather than tablets
@@ -112,43 +139,23 @@ Configuration is stored in
 `BepInEx/config/dev.tempeste.sephiria.qol.cfg`. Delete only that configuration
 file to restore defaults; it will be recreated on the next launch.
 
-## macOS
+The `[MaxPlayer]` section controls the independent large-party implementation:
+`Enabled` toggles it, `MaximumPlayers` accepts 2–16, and
+`CompactMultiplayerHud` scales Sephiria's native party roster as it fills.
 
-Sephiria ships a macOS Mono build, and this plugin is platform-neutral managed C#.
-The loader is the limiting part: BepInEx 5.4.23.5's macOS build is x64, so Apple
-Silicon must launch Sephiria's x64 slice through Rosetta. Native ARM loading is not
-supported by that package. Sephiria 1.0.27 also uses Unity 6; verify the loader
-first because a working `BepInEx/LogOutput.log` is the prerequisite for every mod.
+## Building manually
 
-1. Close Sephiria and back up saves.
-2. Download the official BepInEx 5.4.23.5 `macos_x64` archive and extract it into
-   `~/Library/Application Support/Steam/steamapps/common/Sephiria/`.
-3. Set `executable_name="Sephiria.app"` in `run_bepinex.sh` and make the script
-   executable with `chmod u+x run_bepinex.sh`.
-4. On Apple Silicon, configure Steam/the launcher to use the x86_64 game slice
-   through Rosetta, then launch once. Do not continue until the BepInEx log exists.
-5. Clone this repository and run `./scripts/install-macos.sh`.
-6. Launch through the same BepInEx/Rosetta path and verify the plugin load line.
+The project references assemblies from the local Sephiria installation. Windows
+defaults to `E:\SteamLibrary\steamapps\common\Sephiria`; override it with
+`SEPHIRIA_GAME_DIR` when needed.
 
-The script defaults to Steam's usual macOS library location. Pass a different
-Sephiria game directory as its first argument when needed. It verifies that the
-game's managed assemblies and BepInEx are present before building or copying
-anything. `dotnet` SDK 8 or newer is required to build the plugin.
+```powershell
+dotnet build .\src\SephiriaQoL\SephiriaQoL.csproj -c Release
+```
 
-Utility, JustAnvil, journal search, and the tablet optimizer are expected to be
-portable. The built-in spectator feature is also managed and client-side.
-
-### MaxPlayer_16 on macOS
-
-After the base QoL plugin works, extract `MaxPlayer_16.zip` to
-`Sephiria/Sephiria.app/AddOns/MaxPlayer_16/`. Unlike Windows, Sephiria resolves the
-macOS built-in `AddOns` directory inside the app bundle. The resulting folder must
-directly contain `metadata.json`, `HarmonyBase.dll`, `SetMaxPlayer.dll`, and `Libs/`.
-
-Its assemblies are managed, but the package is third-party and should be tested
-separately. A successful load produces the `MaxPlayer_16` and `AddOnLoader`
-messages in the Unity player log. If it fails, remove only that
-`Sephiria.app/AddOns/MaxPlayer_16` folder; the QoL plugin remains independent.
+Copy the resulting `SephiriaQoL.dll` into `BepInEx/plugins`. The clean-room
+16-player implementation is included in that DLL and does not require a native
+`AddOns` package.
 
 ## Troubleshooting
 
@@ -160,6 +167,8 @@ messages in the Unity player log. If it fails, remove only that
   check again after normal control resumes.
 - Overlay is too small or large: use its `− / percentage / +` header controls, or
   edit `DamagePanelScale` / `PanelScale` in the QoL config. `0` restores auto mode.
+- A host still offers only four slots: confirm `MaxPlayer.Enabled = true` and
+  `MaxPlayer.MaximumPlayers = 16` in the QoL config, then recreate the lobby.
 - Build references are missing: set `SEPHIRIA_GAME_DIR`, or set
   `SEPHIRIA_MANAGED_DIR` directly to the game's `Managed` directory.
 - Behavior changes after a Sephiria update: compare the affected runtime member
