@@ -175,6 +175,42 @@ normal server-authoritative XP, level-up rewards, healing, inventory bonuses, an
 network synchronization remain in control. For consistent level UI above 30,
 install Sephiria QoL on every player in the room.
 
+## Future plans
+
+These are planning priorities rather than release promises. Features will be
+implemented independently against Sephiria's runtime APIs; third-party binaries
+and source are not incorporated into this repository.
+
+### Next candidates
+
+1. **Fast shop reroll** — streamline repeated Sapphire-shop rerolls while keeping
+   Sephiria's normal costs, inventory updates, and server authority.
+2. **Boss-entry announcer** — show a system message identifying the first player
+   to enter a miniboss room, helping large parties coordinate before engagement.
+3. **End-of-run team summary** — reuse the combat tracker to show dealt damage,
+   damage taken, average DPS, contribution, and top sources when a run ends.
+
+### Later candidates
+
+- **Visual hidden-room guidance** — optionally highlight or point toward the
+  current floor's undiscovered entrance as an extension of the existing tracker.
+- **Host-authoritative leaf transfer** — provide confirmed player-to-player
+  transfers with limits, validation, and visible transaction messages.
+- **Preset-slot expansion** — increase the number of saved presets only after the
+  profile serialization and backward-compatibility behavior are fully audited.
+
+### Planning constraints
+
+- Shared-run changes remain server-authoritative and fail safely when disabled.
+- Persistent-profile features require explicit compatibility and recovery checks.
+- New overlays reuse cached/synchronized state and avoid per-frame scene scans.
+- Every user-facing option is configurable through BepInEx and the Control Center.
+
+Current idea references include the
+[Taehyun mod catalog](https://github.com/TaeHyun015/Sephiria-Mods-By-KimJangee/blob/main/mod_list.json)
+and the
+[Mira mod-manager catalog](https://github.com/Mira090/SephiriaModManager-Releases/blob/main/Mods/mod_list.json).
+
 ## Building manually
 
 The project references assemblies from the local Sephiria installation. Windows
