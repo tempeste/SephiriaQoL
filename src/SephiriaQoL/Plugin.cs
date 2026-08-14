@@ -9,12 +9,13 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.5.0";
+    public const string PluginVersion = "0.6.0";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;
     private TabletOptimizerOverlay _tabletOptimizer;
     private SpectatorFeature _spectator;
+    private QoLControlCenter _controlCenter;
     private bool _nativeAddOnsChecked;
 
     private void Awake()
@@ -56,6 +57,20 @@ public sealed class Plugin : BaseUnityPlugin
                 new AcceptableValueRange<int>(2, 16)));
         ConfigEntry<bool> compactMultiplayerHud = Config.Bind("MaxPlayer", "CompactMultiplayerHud", true,
             "Scales down Sephiria's multiplayer roster as more players join.");
+        ConfigEntry<bool> partyScalingEnabled = Config.Bind("PartyScaling", "Enabled", false,
+            "Allows this host to scale newly spawned enemy health and normal-enemy counts.");
+        ConfigEntry<float> enemyHealthMultiplier = Config.Bind("PartyScaling", "EnemyHealthMultiplier", 1f,
+            new ConfigDescription("Host-side enemy health multiplier from 1.0 to 10.0.",
+                new AcceptableValueRange<float>(1f, 10f)));
+        ConfigEntry<float> enemySpawnMultiplier = Config.Bind("PartyScaling", "EnemySpawnMultiplier", 1f,
+            new ConfigDescription("Host-side normal-enemy count multiplier from 1.0 to 4.0.",
+                new AcceptableValueRange<float>(1f, 4f)));
+        ConfigEntry<bool> showControlCenter = Config.Bind("Interface", "ShowControlCenter", false,
+            "Shows the QoL Control Center. The compact QOL button remains available while hidden.");
+        ConfigEntry<KeyboardShortcut> controlCenterHotkey = Config.Bind("Interface", "ToggleControlCenterHotkey",
+            new KeyboardShortcut(UnityEngine.KeyCode.F11), "Shows or hides the QoL Control Center.");
+        ConfigEntry<float> controlCenterScale = Config.Bind("Interface", "ControlCenterScale", 0f,
+            "Control Center scale from 0.75 to 2.0. Use 0 for automatic Retina-aware sizing.");
 
         UtilityOverlay.Configure(showTimer, showDamage, damagePanelScale);
         JournalSearch.Configure(journalSearch);
@@ -68,10 +83,17 @@ public sealed class Plugin : BaseUnityPlugin
             spectatorEnabled, spectatorPreviousHotkey, spectatorNextHotkey, spectatorPanelScale);
         ConditionalSynergyScoring.Configure(preferConditionalSynergies);
         MaxPlayerFeature.Configure(maxPlayerEnabled, maxPlayers, compactMultiplayerHud, Logger);
+        PartyScalingFeature.Configure(partyScalingEnabled, enemyHealthMultiplier, enemySpawnMultiplier, Logger);
+        _controlCenter = new QoLControlCenter(
+            showControlCenter, controlCenterHotkey, controlCenterScale,
+            showTimer, showDamage, damagePanelScale, journalSearch, guaranteedAnvil,
+            showTabletOptimizer, allowTabletRotation, preferConditionalSynergies, tabletOptimizerScale,
+            spectatorEnabled, spectatorPanelScale, maxPlayerEnabled, maxPlayers, compactMultiplayerHud,
+            partyScalingEnabled, enemyHealthMultiplier, enemySpawnMultiplier);
 
         _harmony = new Harmony(PluginGuid);
         _harmony.PatchAll();
-        Logger.LogInfo("Loaded independent QoL features: run timer, detailed damage contribution, journal search, JustAnvil, tablet optimizer, spectator mode, and configurable 16-player rooms.");
+        Logger.LogInfo("Loaded independent QoL features: Control Center, run timer, detailed damage contribution, journal search, JustAnvil, tablet optimizer, spectator mode, configurable 16-player rooms, and optional host Party Scaling.");
     }
 
     private void Update()
@@ -79,6 +101,7 @@ public sealed class Plugin : BaseUnityPlugin
         _utility?.Update();
         _tabletOptimizer?.Update();
         _spectator?.Update();
+        _controlCenter?.Update();
 
         if (!_nativeAddOnsChecked && UnityEngine.Time.realtimeSinceStartup >= 4f)
         {
@@ -93,6 +116,7 @@ public sealed class Plugin : BaseUnityPlugin
         JournalSearch.OnGUI();
         _tabletOptimizer?.OnGUI();
         _spectator?.OnGUI();
+        _controlCenter?.OnGUI();
     }
 
     private void OnDestroy()
@@ -102,5 +126,6 @@ public sealed class Plugin : BaseUnityPlugin
         _utility = null;
         _tabletOptimizer = null;
         _spectator = null;
+        _controlCenter = null;
     }
 }

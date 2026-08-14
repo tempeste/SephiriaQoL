@@ -29,6 +29,8 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
 - `Plugin.cs`: BepInEx entry point, configuration binding, lifecycle, and delayed
   native add-on bootstrap trigger.
 - `UtilityOverlay.cs`: run timer and multiplayer damage-contribution display.
+- `QoLControlCenter.cs`: F11/tabbed configuration UI for everyday, multiplayer,
+  Party Scaling, and independent overlay sizing controls.
 - `JournalSearch.cs`: artifact journal text filtering and related Harmony patch.
 - `JustAnvilFeature.cs`: guarantees an anvil in the first playable room choice
   while preserving the displaced room later in the floor graph.
@@ -42,6 +44,10 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   reusable `CharmActivateCriteria` components.
 - `NativeAddOnBootstrap.cs`: asks Sephiria's built-in `AddOnLoader` to load native
   `AddOns` when startup ordering caused it to miss them.
+- `PartyScalingFeature.cs`: host-only scaling of generated normal-enemy counts and
+  regular, random-phase, and boss enemy health after Sephiria applies its own
+  difficulty and multiplayer bonuses. Minibosses, bosses, and training targets
+  are never duplicated.
 - `MaxPlayerFeature.cs`: clean-room 2–16 player support. It expands Sephiria's
   lobby selector, raises the host's Mirror connection cap, and compacts the native
   multiplayer HUD without depending on a third-party add-on.
@@ -65,6 +71,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   prevent the stutter seen in earlier experiments.
 - Native add-on loading must remain idempotent. Check `AddOnLoader.LoadedMods`
   before calling `LoadAll`.
+- Party Scaling must remain host-authoritative, disabled by default, and applied
+  only to newly generated/spawned enemies. Preserve the normal-enemy phase cap and
+  do not duplicate minibosses, bosses, or training targets.
 - Do not package the third-party MaxPlayer add-on or other third-party binaries.
   The compatibility layer may load separately installed `AddOns`, but the built-in
   `MaxPlayerFeature` must remain an independent implementation.
