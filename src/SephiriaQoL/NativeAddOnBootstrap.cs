@@ -9,8 +9,14 @@ internal static class NativeAddOnBootstrap
     internal static void EnsureLoaded(ManualLogSource log)
     {
         string addOnsPath = AddOnLoader.AddOnsPath;
-        if (!Directory.Exists(addOnsPath) || Directory.GetDirectories(addOnsPath).Length == 0)
+        bool directoryExists = Directory.Exists(addOnsPath);
+        string[] addOnFolders = directoryExists ? Directory.GetDirectories(addOnsPath) : Array.Empty<string>();
+        log.LogInfo($"Checking native AddOns at {addOnsPath} (exists={directoryExists}, folders={addOnFolders.Length}).");
+        if (!directoryExists || addOnFolders.Length == 0)
+        {
+            log.LogInfo("No native AddOn folders were found.");
             return;
+        }
 
         if (AddOnLoader.LoadedMods != null && AddOnLoader.LoadedMods.Count > 0)
         {

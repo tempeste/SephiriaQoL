@@ -4,6 +4,7 @@ obj/
 .idea/
 *.user
 *.suo
+.DS_Store
 
 # Never place private gameplay-altering work in this repository.
 private/
@@ -19,4 +20,3 @@ lib/
 vendor/
 *.dll
 *.zip
-

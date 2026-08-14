@@ -1,6 +1,7 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using Mirror;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +33,7 @@ internal static class JustAnvilFeature
     [HarmonyPatch("GetAllFloorInStage")]
     private static void EnsureFirstChoiceContainsAnvil(List<FloorData> __result)
     {
-        if (_enabled?.Value != true || _placedThisRun || __result == null)
+        if (_enabled?.Value != true || _placedThisRun || __result == null || IsRemoteClient())
             return;
 
         List<FloorData> firstChoices = __result
@@ -72,7 +73,7 @@ internal static class JustAnvilFeature
     [HarmonyPatch("FloorAlloc")]
     private static void KeepAllocatedAnvilPrefab(DungeonManager __instance, string guid)
     {
-        if (_enabled?.Value != true || __instance?.generatedFloors == null)
+        if (_enabled?.Value != true || __instance?.generatedFloors == null || IsRemoteClient())
             return;
 
         if (__instance.generatedFloors.TryGetValue(guid, out FloorData floor) && IsAnvilRoom(floor))
@@ -106,5 +107,6 @@ internal static class JustAnvilFeature
                !normalized.Contains("town") &&
                !normalized.Contains("station");
     }
-}
 
+    private static bool IsRemoteClient() => NetworkClient.active && !NetworkServer.active;
+}
