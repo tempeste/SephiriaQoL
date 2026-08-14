@@ -32,8 +32,10 @@ internal sealed class QoLControlCenter
     private readonly ConfigEntry<bool> _partyScalingEnabled;
     private readonly ConfigEntry<float> _enemyHealthMultiplier;
     private readonly ConfigEntry<float> _enemySpawnMultiplier;
+    private readonly ConfigEntry<bool> _extendedLevelingEnabled;
+    private readonly ConfigEntry<int> _maximumLevel;
 
-    private Rect _windowRect = new Rect(90f, 76f, 520f, 540f);
+    private Rect _windowRect = new Rect(90f, 76f, 520f, 650f);
     private Page _page;
 
     internal QoLControlCenter(
@@ -56,7 +58,9 @@ internal sealed class QoLControlCenter
         ConfigEntry<bool> compactMultiplayerHud,
         ConfigEntry<bool> partyScalingEnabled,
         ConfigEntry<float> enemyHealthMultiplier,
-        ConfigEntry<float> enemySpawnMultiplier)
+        ConfigEntry<float> enemySpawnMultiplier,
+        ConfigEntry<bool> extendedLevelingEnabled,
+        ConfigEntry<int> maximumLevel)
     {
         _visible = visible;
         _hotkey = hotkey;
@@ -78,6 +82,8 @@ internal sealed class QoLControlCenter
         _partyScalingEnabled = partyScalingEnabled;
         _enemyHealthMultiplier = enemyHealthMultiplier;
         _enemySpawnMultiplier = enemySpawnMultiplier;
+        _extendedLevelingEnabled = extendedLevelingEnabled;
+        _maximumLevel = maximumLevel;
     }
 
     internal void Update()
@@ -97,7 +103,7 @@ internal sealed class QoLControlCenter
             43141,
             _windowRect,
             520f,
-            540f,
+            650f,
             scale,
             DrawWindow,
             out _);
@@ -178,7 +184,7 @@ internal sealed class QoLControlCenter
         y = DrawToggle(y, "Allow tablet rotation", "Try rotated tablets while optimizing.", _allowTabletRotation);
         DrawToggle(y, "Prefer positional synergies", "Reward productive relic and tablet links.", _preferConditionalSynergies);
 
-        GUI.Label(new Rect(16f, 505f, 488f, 22f),
+        GUI.Label(new Rect(16f, 615f, 488f, 22f),
             $"Press {_hotkey.Value.MainKey} anywhere to show or hide this panel.", OverlayGui.MutedStyle);
     }
 
@@ -212,8 +218,18 @@ internal sealed class QoLControlCenter
         DrawMultiplier(y + 2f, "Enemy health", _enemyHealthMultiplier, 0.25f, 1f, 10f);
         y += 40f;
         DrawMultiplier(y + 2f, "Normal enemy count", _enemySpawnMultiplier, 0.25f, 1f, 4f);
+        y += 40f;
 
-        GUI.Label(new Rect(16f, 505f, 488f, 22f),
+        y = DrawToggle(y, "Extended leveling", "Keep earning levels in high-density runs.", _extendedLevelingEnabled);
+        DrawStepperLabel(y + 2f, "Maximum run level", _maximumLevel.Value.ToString());
+        if (GUI.Button(new Rect(400f, y + 2f, 28f, 24f), "−", OverlayGui.ButtonStyle))
+            _maximumLevel.Value = Mathf.Max(
+                ExtendedLevelingFeature.VanillaMaximumLevel, _maximumLevel.Value - 10);
+        if (GUI.Button(new Rect(462f, y + 2f, 28f, 24f), "+", OverlayGui.ButtonStyle))
+            _maximumLevel.Value = Mathf.Min(
+                ExtendedLevelingFeature.MaximumSupportedLevel, _maximumLevel.Value + 10);
+
+        GUI.Label(new Rect(16f, 615f, 488f, 22f),
             "Count scaling excludes minibosses, bosses, and training targets.", OverlayGui.MutedStyle);
     }
 

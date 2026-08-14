@@ -48,6 +48,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   regular, random-phase, and boss enemy health after Sephiria applies its own
   difficulty and multiplayer bonuses. Minibosses, bosses, and training targets
   are never duplicated.
+- `ExtendedLevelingFeature.cs`: expands Sephiria's cumulative run-XP table for
+  high-density Party Scaling runs while preserving every standard threshold and
+  the game's server-authoritative level-up path.
 - `MaxPlayerFeature.cs`: clean-room 2–16 player support. It expands Sephiria's
   lobby selector, raises the host's Mirror connection cap, and compacts the native
   multiplayer HUD without depending on a third-party add-on.
@@ -74,6 +77,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
 - Party Scaling must remain host-authoritative, disabled by default, and applied
   only to newly generated/spawned enemies. Preserve the normal-enemy phase cap and
   do not duplicate minibosses, bosses, or training targets.
+- Extended leveling must preserve Sephiria's standard XP thresholds and normal
+  `AddExp`, `LocalAddExp`, reward, healing, and synchronization paths. Do not
+  replace progression methods or write to save/profile data.
 - Do not package the third-party MaxPlayer add-on or other third-party binaries.
   The compatibility layer may load separately installed `AddOns`, but the built-in
   `MaxPlayerFeature` must remain an independent implementation.

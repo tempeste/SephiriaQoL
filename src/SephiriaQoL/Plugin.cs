@@ -9,7 +9,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.6.0";
+    public const string PluginVersion = "0.7.0";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;
@@ -65,6 +65,13 @@ public sealed class Plugin : BaseUnityPlugin
         ConfigEntry<float> enemySpawnMultiplier = Config.Bind("PartyScaling", "EnemySpawnMultiplier", 1f,
             new ConfigDescription("Host-side normal-enemy count multiplier from 1.0 to 4.0.",
                 new AcceptableValueRange<float>(1f, 4f)));
+        ConfigEntry<bool> extendedLevelingEnabled = Config.Bind("ExtendedLeveling", "Enabled", true,
+            "Allows run levels to continue beyond Sephiria's standard maximum level.");
+        ConfigEntry<int> maximumLevel = Config.Bind("ExtendedLeveling", "MaximumLevel",
+            ExtendedLevelingFeature.DefaultMaximumLevel,
+            new ConfigDescription("Maximum run level from 30 to 200.",
+                new AcceptableValueRange<int>(ExtendedLevelingFeature.VanillaMaximumLevel,
+                    ExtendedLevelingFeature.MaximumSupportedLevel)));
         ConfigEntry<bool> showControlCenter = Config.Bind("Interface", "ShowControlCenter", false,
             "Shows the QoL Control Center. The compact QOL button remains available while hidden.");
         ConfigEntry<KeyboardShortcut> controlCenterHotkey = Config.Bind("Interface", "ToggleControlCenterHotkey",
@@ -84,16 +91,18 @@ public sealed class Plugin : BaseUnityPlugin
         ConditionalSynergyScoring.Configure(preferConditionalSynergies);
         MaxPlayerFeature.Configure(maxPlayerEnabled, maxPlayers, compactMultiplayerHud, Logger);
         PartyScalingFeature.Configure(partyScalingEnabled, enemyHealthMultiplier, enemySpawnMultiplier, Logger);
+        ExtendedLevelingFeature.Configure(extendedLevelingEnabled, maximumLevel, Logger);
         _controlCenter = new QoLControlCenter(
             showControlCenter, controlCenterHotkey, controlCenterScale,
             showTimer, showDamage, damagePanelScale, journalSearch, guaranteedAnvil,
             showTabletOptimizer, allowTabletRotation, preferConditionalSynergies, tabletOptimizerScale,
             spectatorEnabled, spectatorPanelScale, maxPlayerEnabled, maxPlayers, compactMultiplayerHud,
-            partyScalingEnabled, enemyHealthMultiplier, enemySpawnMultiplier);
+            partyScalingEnabled, enemyHealthMultiplier, enemySpawnMultiplier,
+            extendedLevelingEnabled, maximumLevel);
 
         _harmony = new Harmony(PluginGuid);
         _harmony.PatchAll();
-        Logger.LogInfo("Loaded independent QoL features: Control Center, run timer, detailed damage contribution, journal search, JustAnvil, tablet optimizer, spectator mode, configurable 16-player rooms, and optional host Party Scaling.");
+        Logger.LogInfo("Loaded independent QoL features: Control Center, run timer, detailed damage contribution, journal search, JustAnvil, tablet optimizer, spectator mode, configurable 16-player rooms, optional host Party Scaling, and extended run leveling.");
     }
 
     private void Update()
@@ -102,6 +111,7 @@ public sealed class Plugin : BaseUnityPlugin
         _tabletOptimizer?.Update();
         _spectator?.Update();
         _controlCenter?.Update();
+        ExtendedLevelingFeature.Refresh();
 
         if (!_nativeAddOnsChecked && UnityEngine.Time.realtimeSinceStartup >= 4f)
         {
@@ -121,6 +131,7 @@ public sealed class Plugin : BaseUnityPlugin
 
     private void OnDestroy()
     {
+        ExtendedLevelingFeature.Restore();
         _harmony?.UnpatchSelf();
         _spectator?.Dispose();
         _utility = null;

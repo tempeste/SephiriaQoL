@@ -15,6 +15,7 @@ Current scope:
 - Configurable 2–16 player rooms with a compact large-party HUD
 - A unified QoL Control Center for toggles and overlay sizing
 - Optional host-side Party Scaling for enemy health and normal-enemy counts
+- Extended run leveling for the additional XP available in high-density runs
 
 Use the compact **QOL** button or press `F11` to open the Control Center. It groups
 the everyday, multiplayer, and interface settings in one draggable panel. The
@@ -36,17 +37,16 @@ search more layouts but can briefly pause the game.
 The complete Sephiria 1.0.27 conditional inventory and coverage notes are in
 [`docs/CONDITIONALS.md`](docs/CONDITIONALS.md).
 
-This repository intentionally excludes private gameplay-altering projects,
-progression/save manipulation, third-party mod binaries, and decompiler output.
-Implementations here are maintained independently against the game's runtime APIs
-and observed behavior.
+This repository intentionally excludes permanent profile/save editing,
+third-party mod binaries, and decompiler output. Implementations here are
+maintained independently against the game's runtime APIs and observed behavior.
 
 ## One-command setup
 
 Friends do not need to hunt down individual mod files. Clone this repository and
 run the installer for the current platform. It installs the pinned BepInEx release
 when needed, then builds and installs the single `SephiriaQoL.dll` containing the
-QoL, spectator, and 16-player features.
+QoL, spectator, 16-player, Party Scaling, and extended-leveling features.
 
 The installers verify the BepInEx download with a committed SHA-256 hash. This
 repository does not copy or redistribute third-party mod binaries.
@@ -111,7 +111,7 @@ Apple Silicon.
 ### Confirm it loaded
 
 After one launch, check `BepInEx/LogOutput.log` for
-`Loading [Sephiria QoL 0.6.0]`. The plugin's next line lists its enabled QoL,
+`Loading [Sephiria QoL 0.7.0]`. The plugin's next line lists its enabled QoL,
 spectator, and 16-player features.
 
 ## Who needs each mod?
@@ -125,6 +125,7 @@ spectator, and 16-player features.
 | Native add-on bootstrap | Not required | Only machines loading native `AddOns` | This only repairs local add-on startup ordering. |
 | 16-player rooms | Required for rooms above the vanilla limit | Optional | The host owns the lobby and network limit. Clients get the compact large-party HUD and can host larger rooms themselves when installed. |
 | Party Scaling | Required | Not required | Enemy health and spawn plans are changed only by the host and synchronized through Sephiria's normal networking. |
+| Extended leveling | Required above level 30 | Recommended | The host owns XP and level progression. Installing on clients keeps their XP bar and maximum-level text consistent above 30. |
 
 There are no QoL features that must be installed by every player. For the most
 consistent UI in a 5–16 player room, install Sephiria QoL on everyone, but only the
@@ -161,6 +162,14 @@ Other players do not need the plugin for Party Scaling. They receive the host's
 spawned enemies and synchronized health values through the game's normal network
 state.
 
+The `[ExtendedLeveling]` section is enabled by default because increased enemy
+counts create substantially more XP. `MaximumLevel` accepts 30–200 and defaults
+to 100. Every standard XP threshold through level 30 is preserved; above it, the
+XP required for the next level increases by 200 every three levels. Sephiria's
+normal server-authoritative XP, level-up rewards, healing, inventory bonuses, and
+network synchronization remain in control. For consistent level UI above 30,
+install Sephiria QoL on every player in the room.
+
 ## Building manually
 
 The project references assemblies from the local Sephiria installation. Windows
@@ -190,6 +199,8 @@ Copy the resulting `SephiriaQoL.dll` into `BepInEx/plugins`. The clean-room
 - Party Scaling appears inactive: confirm this machine is the host, enable
   `PartyScaling.Enabled`, and enter a new encounter. Existing enemies are not
   retroactively changed.
+- Leveling stops at 30: confirm `ExtendedLeveling.Enabled = true` on the host and
+  set `ExtendedLeveling.MaximumLevel` above 30 before earning the next threshold.
 - Build references are missing: set `SEPHIRIA_GAME_DIR`, or set
   `SEPHIRIA_MANAGED_DIR` directly to the game's `Managed` directory.
 - Behavior changes after a Sephiria update: compare the affected runtime member
