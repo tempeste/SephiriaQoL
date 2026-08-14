@@ -28,7 +28,8 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
 
 - `Plugin.cs`: BepInEx entry point, configuration binding, lifecycle, and delayed
   native add-on bootstrap trigger.
-- `UtilityOverlay.cs`: run timer and multiplayer damage-contribution display.
+- `UtilityOverlay.cs`: run timer and multiplayer combat-contribution display,
+  including live dealt and damage-taken run totals.
 - `QoLControlCenter.cs`: F11/tabbed configuration UI for everyday, multiplayer,
   Party Scaling, and independent overlay sizing controls.
 - `JournalSearch.cs`: artifact journal text filtering and related Harmony patch.

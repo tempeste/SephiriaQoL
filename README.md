@@ -4,7 +4,7 @@ Clean BepInEx implementations of quality-of-life features for Sephiria.
 
 Current scope:
 
-- Run timer and color-coded multiplayer damage contribution display
+- Run timer and color-coded multiplayer dealt/damage-taken display
 - Click-through player damage details: run/area totals, DPS, damage taken, HP,
   elemental mix, and top damage sources
 - Guaranteed first-choice anvil room
@@ -111,7 +111,7 @@ Apple Silicon.
 ### Confirm it loaded
 
 After one launch, check `BepInEx/LogOutput.log` for
-`Loading [Sephiria QoL 0.7.0]`. The plugin's next line lists its enabled QoL,
+`Loading [Sephiria QoL 0.7.1]`. The plugin's next line lists its enabled QoL,
 spectator, and 16-player features.
 
 ## Who needs each mod?
@@ -145,6 +145,11 @@ pass and wait for the inventory to settle before clicking again.
 Configuration is stored in
 `BepInEx/config/dev.tempeste.sephiria.qol.cfg`. Delete only that configuration
 file to restore defaults; it will be recreated on the next launch.
+
+The `[Utility]` section controls the run timer and combat tracker.
+`ShowDamageTaken` is enabled by default and adds every active player's cumulative
+incoming damage plus the party's total incoming damage to the live contribution
+panel. Click a player for their HP, average DPS, elemental mix, and top sources.
 
 The `[MaxPlayer]` section controls the independent large-party implementation:
 `Enabled` toggles it, `MaximumPlayers` accepts 2–16, and

@@ -9,7 +9,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.7.0";
+    public const string PluginVersion = "0.7.1";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;
@@ -24,6 +24,8 @@ public sealed class Plugin : BaseUnityPlugin
             "Displays elapsed run time at the top of the screen.");
         ConfigEntry<bool> showDamage = Config.Bind("Utility", "ShowDamageContribution", true,
             "Displays each active player's damage and contribution percentage.");
+        ConfigEntry<bool> showDamageTaken = Config.Bind("Utility", "ShowDamageTaken", true,
+            "Displays each active player's run-total damage taken in the combat tracker.");
         ConfigEntry<float> damagePanelScale = Config.Bind("Utility", "DamagePanelScale", 0f,
             "Damage panel scale from 0.75 to 2.0. Use 0 for automatic Retina-aware sizing.");
         ConfigEntry<bool> journalSearch = Config.Bind("Utility", "JournalSearch", true,
@@ -79,7 +81,7 @@ public sealed class Plugin : BaseUnityPlugin
         ConfigEntry<float> controlCenterScale = Config.Bind("Interface", "ControlCenterScale", 0f,
             "Control Center scale from 0.75 to 2.0. Use 0 for automatic Retina-aware sizing.");
 
-        UtilityOverlay.Configure(showTimer, showDamage, damagePanelScale);
+        UtilityOverlay.Configure(showTimer, showDamage, showDamageTaken, damagePanelScale);
         JournalSearch.Configure(journalSearch);
         JustAnvilFeature.Configure(guaranteedAnvil, Logger);
         _utility = new UtilityOverlay();
@@ -94,7 +96,7 @@ public sealed class Plugin : BaseUnityPlugin
         ExtendedLevelingFeature.Configure(extendedLevelingEnabled, maximumLevel, Logger);
         _controlCenter = new QoLControlCenter(
             showControlCenter, controlCenterHotkey, controlCenterScale,
-            showTimer, showDamage, damagePanelScale, journalSearch, guaranteedAnvil,
+            showTimer, showDamage, showDamageTaken, damagePanelScale, journalSearch, guaranteedAnvil,
             showTabletOptimizer, allowTabletRotation, preferConditionalSynergies, tabletOptimizerScale,
             spectatorEnabled, spectatorPanelScale, maxPlayerEnabled, maxPlayers, compactMultiplayerHud,
             partyScalingEnabled, enemyHealthMultiplier, enemySpawnMultiplier,

@@ -17,6 +17,7 @@ internal sealed class QoLControlCenter
     private readonly ConfigEntry<float> _panelScale;
     private readonly ConfigEntry<bool> _showTimer;
     private readonly ConfigEntry<bool> _showDamage;
+    private readonly ConfigEntry<bool> _showDamageTaken;
     private readonly ConfigEntry<float> _damageScale;
     private readonly ConfigEntry<bool> _journalSearch;
     private readonly ConfigEntry<bool> _guaranteedAnvil;
@@ -44,6 +45,7 @@ internal sealed class QoLControlCenter
         ConfigEntry<float> panelScale,
         ConfigEntry<bool> showTimer,
         ConfigEntry<bool> showDamage,
+        ConfigEntry<bool> showDamageTaken,
         ConfigEntry<float> damageScale,
         ConfigEntry<bool> journalSearch,
         ConfigEntry<bool> guaranteedAnvil,
@@ -67,6 +69,7 @@ internal sealed class QoLControlCenter
         _panelScale = panelScale;
         _showTimer = showTimer;
         _showDamage = showDamage;
+        _showDamageTaken = showDamageTaken;
         _damageScale = damageScale;
         _journalSearch = journalSearch;
         _guaranteedAnvil = guaranteedAnvil;
@@ -178,6 +181,7 @@ internal sealed class QoLControlCenter
         float y = 124f;
         y = DrawToggle(y, "Run timer", "Keep elapsed run time visible.", _showTimer);
         y = DrawToggle(y, "Damage contribution", "Color chart with per-player breakdowns.", _showDamage);
+        y = DrawToggle(y, "Damage taken tracker", "Show each player's run-total incoming damage.", _showDamageTaken);
         y = DrawToggle(y, "Journal search", "Filter the artifact journal by keyword.", _journalSearch);
         y = DrawToggle(y, "First-choice anvil", "Guarantee one early anvil room on the host.", _guaranteedAnvil);
         y = DrawToggle(y, "Tablet optimizer panel", "Show the inventory layout assistant.", _showTabletOptimizer);

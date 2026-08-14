@@ -39,6 +39,7 @@ internal sealed class UtilityOverlay
 
     private static ConfigEntry<bool> _showTimer;
     private static ConfigEntry<bool> _showDamage;
+    private static ConfigEntry<bool> _showDamageTaken;
     private static ConfigEntry<float> _damageScale;
 
     private readonly List<DamageEntry> _damage = new List<DamageEntry>();
@@ -56,10 +57,12 @@ internal sealed class UtilityOverlay
     internal static void Configure(
         ConfigEntry<bool> showTimer,
         ConfigEntry<bool> showDamage,
+        ConfigEntry<bool> showDamageTaken,
         ConfigEntry<float> damageScale)
     {
         _showTimer = showTimer;
         _showDamage = showDamage;
+        _showDamageTaken = showDamageTaken;
         _damageScale = damageScale;
     }
 
@@ -154,7 +157,7 @@ internal sealed class UtilityOverlay
         const float width = 380f;
         OverlayGui.Fill(new Rect(0f, 0f, width, 34f), OverlayGui.PanelRaised);
         OverlayGui.Fill(new Rect(0f, 33f, width, 1f), OverlayGui.Border);
-        GUI.Label(new Rect(12f, 5f, 170f, 24f), "DAMAGE CONTRIBUTION", OverlayGui.TitleStyle);
+        GUI.Label(new Rect(12f, 5f, 170f, 24f), "COMBAT CONTRIBUTION", OverlayGui.TitleStyle);
         OverlayGui.DrawScaleControls(_damageScale, 205f, 6f);
         if (GUI.Button(new Rect(340f, 6f, 28f, 22f), _collapsed ? "+" : "−", OverlayGui.ButtonStyle))
             _collapsed = !_collapsed;
@@ -162,8 +165,12 @@ internal sealed class UtilityOverlay
         if (!_collapsed)
         {
             float total = _damage.Sum(entry => entry.Damage);
-            GUI.Label(new Rect(12f, 38f, 250f, 18f), "RUN TOTAL • CLICK A PLAYER FOR DETAILS", OverlayGui.MutedStyle);
-            GUI.Label(new Rect(268f, 38f, 100f, 18f), $"Σ {total:N0}", OverlayGui.SmallRightStyle);
+            float totalTaken = _damage.Sum(entry => entry.DamageTaken);
+            GUI.Label(new Rect(12f, 38f, 205f, 18f), "RUN TOTALS • CLICK FOR DETAILS", OverlayGui.MutedStyle);
+            string totalLabel = _showDamageTaken?.Value == true
+                ? $"OUT {total:N0}  •  IN {totalTaken:N0}"
+                : $"OUT {total:N0}";
+            GUI.Label(new Rect(210f, 38f, 158f, 18f), totalLabel, OverlayGui.SmallRightStyle);
 
             float contentHeight = CalculateDamageContentHeight();
             Rect viewport = new Rect(0f, 58f, 380f, Mathf.Max(1f, _logicalDamageHeight - 58f));
@@ -180,7 +187,7 @@ internal sealed class UtilityOverlay
             {
                 float ratio = total > 0f ? entry.Damage / total : 0f;
                 DrawDamageRow(entry, rank, ratio, y);
-                y += 50f;
+                y += DamageRowHeight;
                 rank++;
             }
 
@@ -196,7 +203,8 @@ internal sealed class UtilityOverlay
 
     private void DrawDamageRow(DamageEntry entry, int rank, float ratio, float y)
     {
-        Rect row = new Rect(10f, y, 360f, 44f);
+        bool showTaken = _showDamageTaken?.Value == true;
+        Rect row = new Rect(10f, y, 360f, showTaken ? 52f : 44f);
         bool selected = entry.Player == _selectedPlayer;
         OverlayGui.Fill(row, selected ? new Color(entry.Color.r, entry.Color.g, entry.Color.b, 0.17f) : OverlayGui.PanelRaised);
         OverlayGui.Fill(new Rect(row.x, row.y, 3f, row.height), entry.Color);
@@ -209,12 +217,15 @@ internal sealed class UtilityOverlay
         GUI.Label(new Rect(48f, y + 3f, 198f, 20f), entry.Name, OverlayGui.LabelStyle);
         if (entry.IsDead)
             GUI.Label(new Rect(246f, y + 3f, 45f, 20f), "DOWN", OverlayGui.MutedStyle);
-        GUI.Label(new Rect(272f, y + 3f, 88f, 20f), $"{entry.Damage:N0}", OverlayGui.RightStyle);
+        GUI.Label(new Rect(260f, y + 3f, 100f, 20f), $"OUT {entry.Damage:N0}", OverlayGui.RightStyle);
 
-        Rect track = new Rect(48f, y + 28f, 260f, 6f);
+        if (showTaken)
+            GUI.Label(new Rect(48f, y + 24f, 180f, 18f), $"IN {entry.DamageTaken:N0}", OverlayGui.MutedStyle);
+
+        Rect track = new Rect(48f, y + (showTaken ? 43f : 28f), 260f, showTaken ? 4f : 6f);
         OverlayGui.Fill(track, OverlayGui.Track);
         OverlayGui.Fill(new Rect(track.x, track.y, track.width * Mathf.Clamp01(ratio), track.height), entry.Color);
-        GUI.Label(new Rect(312f, y + 20f, 48f, 20f), $"{ratio:P0}", OverlayGui.SmallRightStyle);
+        GUI.Label(new Rect(312f, y + (showTaken ? 24f : 20f), 48f, 20f), $"{ratio:P0}", OverlayGui.SmallRightStyle);
     }
 
     private void DrawDetails(DamageEntry entry, float partyTotal, float y)
@@ -286,12 +297,14 @@ internal sealed class UtilityOverlay
 
     private float CalculateDamageContentHeight()
     {
-        float height = 6f + _damage.Count * 50f;
+        float height = 6f + _damage.Count * DamageRowHeight;
         DamageEntry selected = _damage.FirstOrDefault(entry => entry.Player == _selectedPlayer);
         if (selected != null)
             height += 148f + Math.Min(4, selected.Sources.Count) * 20f;
         return height;
     }
+
+    private static float DamageRowHeight => _showDamageTaken?.Value == true ? 58f : 50f;
 
     private static string ReadPlayerName(PlayerAvatar player)
     {
