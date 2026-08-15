@@ -89,44 +89,46 @@ internal sealed class TabletOptimizerOverlay
         int tabletCount = inventory?.CurrentStoneTabletsCount ?? 0;
         int charmCount = inventory?.charms?.Count ?? 0;
 
-        OverlayGui.Fill(new Rect(0f, 0f, 360f, 34f), OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(0f, 33f, 360f, 1f), OverlayGui.Border);
-        GUI.Label(new Rect(12f, 5f, 165f, 24f), "TABLET OPTIMIZER", OverlayGui.TitleStyle);
+        OverlayGui.DrawHeader(new Rect(4f, 4f, 352f, 32f));
+        GUI.Label(new Rect(12f, 7f, 165f, 24f), "Tablet Optimizer", OverlayGui.TitleStyle);
         OverlayGui.DrawScaleControls(_panelScale, 222f, 6f);
 
         GUI.Label(new Rect(12f, 42f, 336f, 40f),
-            "Rearranges your whole inventory to maximize useful damage links, charm levels, and tablet bonuses.");
+            "Rearranges your whole inventory to maximize useful damage links, charm levels, and tablet bonuses.",
+            OverlayGui.LabelStyle);
         GUI.Label(new Rect(12f, 84f, 220f, 22f),
-            inventory == null ? "No active player inventory" : $"Tablets: {tabletCount}   Charms: {charmCount}");
+            inventory == null ? "No active player inventory" : $"Tablets: {tabletCount}   Charms: {charmCount}",
+            OverlayGui.MutedStyle);
 
-        GUI.Label(new Rect(12f, 114f, 80f, 22f), "Passes");
-        if (GUI.Button(new Rect(90f, 112f, 30f, 24f), "−"))
+        GUI.Label(new Rect(12f, 114f, 80f, 22f), "Passes", OverlayGui.LabelStyle);
+        if (GUI.Button(new Rect(90f, 112f, 30f, 24f), "−", OverlayGui.ButtonStyle))
             _passes.Value = Mathf.Max(1, _passes.Value - 1);
-        GUI.Label(new Rect(126f, 114f, 28f, 22f), _passes.Value.ToString());
-        if (GUI.Button(new Rect(156f, 112f, 30f, 24f), "+"))
+        GUI.Label(new Rect(126f, 114f, 28f, 22f), _passes.Value.ToString(), OverlayGui.LabelStyle);
+        if (GUI.Button(new Rect(156f, 112f, 30f, 24f), "+", OverlayGui.ButtonStyle))
             _passes.Value = Mathf.Min(4, _passes.Value + 1);
 
         bool allowRotation = GUI.Toggle(new Rect(226f, 114f, 122f, 22f),
-            _allowRotation.Value, "Rotate tablets");
+            _allowRotation.Value, "Rotate tablets", OverlayGui.ToggleStyle);
         if (allowRotation != _allowRotation.Value)
             _allowRotation.Value = allowRotation;
 
         bool preferConditionals = GUI.Toggle(new Rect(12f, 142f, 336f, 22f),
-            _preferConditionalSynergies.Value, "Prefer positional relic synergies");
+            _preferConditionalSynergies.Value, "Prefer positional relic synergies", OverlayGui.ToggleStyle);
         if (preferConditionals != _preferConditionalSynergies.Value)
             _preferConditionalSynergies.Value = preferConditionals;
 
         bool canRun = inventory != null && charmCount > 0 && Time.unscaledTime >= _nextAllowedRun;
         bool previousEnabled = GUI.enabled;
         GUI.enabled = canRun;
-        if (GUI.Button(new Rect(12f, 172f, 336f, 36f), $"Optimize layout ({_passes.Value} pass{(_passes.Value == 1 ? "" : "es")})"))
+        if (GUI.Button(new Rect(12f, 172f, 336f, 36f), $"Optimize layout ({_passes.Value} pass{(_passes.Value == 1 ? "" : "es")})",
+                OverlayGui.SelectedButtonStyle))
             Optimize(inventory);
         GUI.enabled = previousEnabled;
 
         string status = Time.unscaledTime <= _statusUntil || inventory == null
             ? _status
             : "Ready. Higher pass counts may briefly pause the game.";
-        GUI.Label(new Rect(12f, 216f, 336f, 42f), status);
+        GUI.Label(new Rect(12f, 216f, 336f, 42f), status, OverlayGui.LabelStyle);
         GUI.Label(new Rect(12f, 264f, 336f, 20f), "Changes only your own inventory; click once and wait.", OverlayGui.MutedStyle);
 
         GUI.DragWindow(new Rect(0f, 0f, 210f, 34f));

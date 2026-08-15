@@ -64,28 +64,26 @@ internal sealed class LeafTransferOverlay
             .Where(player => player != null && player != local && !player.IsDead)
             .ToList() ?? new List<PlayerAvatar>();
 
-        OverlayGui.Fill(new Rect(0f, 0f, 390f, 40f), OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(0f, 39f, 390f, 1f), OverlayGui.Border);
-        OverlayGui.Fill(new Rect(0f, 0f, 5f, 40f), OverlayGui.Accent);
-        GUI.Label(new Rect(16f, 7f, 170f, 24f), "LEAF TRANSFER", OverlayGui.TitleStyle);
+        OverlayGui.DrawHeader(new Rect(4f, 4f, 382f, 36f));
+        GUI.Label(new Rect(16f, 9f, 170f, 24f), "Leaf Transfer", OverlayGui.TitleStyle);
         OverlayGui.DrawScaleControls(_panelScale, 218f, 9f);
         if (GUI.Button(new Rect(356f, 9f, 23f, 22f), "×", OverlayGui.ButtonStyle))
             _visible = false;
 
         GUI.Label(new Rect(16f, 49f, 358f, 20f),
-            local == null ? "LOCAL PLAYER UNAVAILABLE" : $"BALANCE {local.Money:N0}",
+            local == null ? "Local player unavailable" : $"Balance  {local.Money:N0}",
             OverlayGui.LabelStyle);
-        GUI.Label(new Rect(16f, 72f, 100f, 22f), "AMOUNT", OverlayGui.MutedStyle);
+        GUI.Label(new Rect(16f, 72f, 100f, 22f), "Amount", OverlayGui.MutedStyle);
         if (GUI.Button(new Rect(124f, 70f, 36f, 25f), "−", OverlayGui.ButtonStyle))
             _amount = Mathf.Max(1, _amount - 10);
         GUI.Label(new Rect(164f, 71f, 82f, 23f), _amount.ToString("N0"), OverlayGui.RightStyle);
         if (GUI.Button(new Rect(252f, 70f, 36f, 25f), "+", OverlayGui.ButtonStyle))
             _amount = Mathf.Min(_maximumTransfer.Value, _amount + 10);
-        if (GUI.Button(new Rect(294f, 70f, 80f, 25f), "MAX", OverlayGui.ButtonStyle) && local != null)
+        if (GUI.Button(new Rect(294f, 70f, 80f, 25f), "Max", OverlayGui.ButtonStyle) && local != null)
             _amount = Mathf.Clamp(local.Money, 1, _maximumTransfer.Value);
 
         GUI.Label(new Rect(16f, 104f, 358f, 36f),
-            "Click SEND twice on the same teammate to confirm. Transfers require the host's validation.",
+            "Click Send twice on the same teammate to confirm. Transfers require the host's validation.",
             OverlayGui.MutedStyle);
 
         float contentHeight = recipients.Count * 48f + 4f;
@@ -94,14 +92,12 @@ internal sealed class LeafTransferOverlay
         float y = 2f;
         foreach (PlayerAvatar recipient in recipients)
         {
-            OverlayGui.Fill(new Rect(12f, y, 366f, 40f), OverlayGui.PanelRaised);
+            OverlayGui.DrawPanel(new Rect(12f, y, 366f, 40f));
             GUI.Label(new Rect(24f, y + 10f, 218f, 20f), recipient.Name, OverlayGui.LabelStyle);
             bool armed = _armedRecipient == recipient && Time.unscaledTime <= _armedUntil;
-            Color previous = GUI.backgroundColor;
-            GUI.backgroundColor = armed ? new Color(0.98f, 0.68f, 0.22f, 1f) : OverlayGui.Accent;
-            if (GUI.Button(new Rect(270f, y + 7f, 94f, 26f), armed ? "CONFIRM" : "SEND", OverlayGui.ButtonStyle))
+            if (GUI.Button(new Rect(270f, y + 7f, 94f, 26f), armed ? "Confirm" : "Send",
+                    armed ? OverlayGui.SelectedButtonStyle : OverlayGui.ButtonStyle))
                 HandleSend(local, recipient, armed);
-            GUI.backgroundColor = previous;
             y += 48f;
         }
         if (recipients.Count == 0)

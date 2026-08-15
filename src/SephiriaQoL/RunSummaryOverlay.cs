@@ -119,29 +119,27 @@ internal sealed class RunSummaryOverlay
         float partyDamage = _entries.Sum(entry => entry.Damage);
         float partyTaken = _entries.Sum(entry => entry.DamageTaken);
 
-        OverlayGui.Fill(new Rect(0f, 0f, width, 42f), OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(0f, 41f, width, 1f), OverlayGui.Border);
-        OverlayGui.Fill(new Rect(0f, 0f, 5f, 42f), OverlayGui.Accent);
-        GUI.Label(new Rect(16f, 7f, 174f, 26f), "TEAM RUN SUMMARY", OverlayGui.TitleStyle);
+        OverlayGui.DrawHeader(new Rect(4f, 4f, width - 8f, 38f));
+        GUI.Label(new Rect(16f, 7f, 174f, 26f), "Team Run Summary", OverlayGui.TitleStyle);
         if (_historyIndex > 0 && GUI.Button(new Rect(194f, 10f, 31f, 22f), "‹", OverlayGui.ButtonStyle))
             ShowRecord(_historyIndex - 1);
         if (_historyIndex >= 0 && _historyIndex < _history.Count - 1 &&
             GUI.Button(new Rect(229f, 10f, 31f, 22f), "›", OverlayGui.ButtonStyle))
             ShowRecord(_historyIndex + 1);
         if (_historyIndex >= 0)
-            GUI.Label(new Rect(267f, 11f, 98f, 20f), $"RUN {_historyIndex + 1}/{_history.Count}", OverlayGui.MutedStyle);
+            GUI.Label(new Rect(267f, 11f, 98f, 20f), $"Run {_historyIndex + 1}/{_history.Count}", OverlayGui.MutedStyle);
         OverlayGui.DrawScaleControls(_panelScale, 372f, 10f);
         if (GUI.Button(new Rect(522f, 10f, 25f, 22f), "×", OverlayGui.ButtonStyle))
             _visible = false;
 
         TimeSpan elapsed = TimeSpan.FromSeconds(Math.Max(0f, _playedSeconds));
-        string totals = $"{_entries.Count} PLAYERS   •   {elapsed.Hours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}   •   OUT {partyDamage:N0}   •   IN {partyTaken:N0}";
+        string totals = $"{_entries.Count} players   •   {elapsed.Hours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}   •   Out {partyDamage:N0}   •   In {partyTaken:N0}";
         GUI.Label(new Rect(16f, 49f, 528f, 22f), totals, OverlayGui.LabelStyle);
         string recordedAt = _historyIndex >= 0 && _historyIndex < _history.Count
             ? $"   •   {_history[_historyIndex].TimestampUtc.ToLocalTime():yyyy-MM-dd HH:mm}"
             : string.Empty;
         GUI.Label(new Rect(16f, 71f, 528f, 18f),
-            $"CLICK A PLAYER FOR THEIR TOP DAMAGE SOURCES{recordedAt}", OverlayGui.MutedStyle);
+            $"Click a player for their top damage sources{recordedAt}", OverlayGui.MutedStyle);
 
         float contentHeight = 8f + _entries.Count * 58f + (_selected == null ? 0f : 126f);
         Rect viewport = new Rect(0f, 94f, width, Mathf.Max(1f, height - 94f));
@@ -171,11 +169,11 @@ internal sealed class RunSummaryOverlay
     {
         Rect row = new Rect(12f, y, 536f, 50f);
         bool selected = _selected == entry;
-        OverlayGui.Fill(row, selected
-            ? new Color(entry.Color.r, entry.Color.g, entry.Color.b, 0.17f)
-            : OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(row.x, row.y, 4f, row.height), entry.Color);
-        OverlayGui.Outline(row, selected ? entry.Color : OverlayGui.Border);
+        Color rowFill = selected
+            ? new Color(entry.Color.r * 0.34f, entry.Color.g * 0.34f, entry.Color.b * 0.34f, 1f)
+            : OverlayGui.PanelRaised;
+        OverlayGui.DrawPanel(row, rowFill, selected ? entry.Color : OverlayGui.Border);
+        OverlayGui.DrawPip(new Rect(row.x + 7f, row.y + 8f, 8f, 8f), entry.Color);
 
         if (GUI.Button(row, GUIContent.none, GUIStyle.none))
             _selected = selected ? null : entry;
@@ -184,12 +182,12 @@ internal sealed class RunSummaryOverlay
         float dps = entry.Damage / Mathf.Max(1f, _playedSeconds);
         float? previousDamage = PreviousDamage(entry.Name);
         string delta = previousDamage.HasValue ? $"   •   Δ {entry.Damage - previousDamage.Value:+0;-0;0}" : string.Empty;
-        GUI.Label(new Rect(24f, y + 4f, 28f, 20f), $"{rank:00}", OverlayGui.MutedStyle);
-        GUI.Label(new Rect(54f, y + 4f, 205f, 20f), entry.Name, OverlayGui.LabelStyle);
+        GUI.Label(new Rect(30f, y + 4f, 26f, 20f), $"{rank:00}", OverlayGui.MutedStyle);
+        GUI.Label(new Rect(60f, y + 4f, 199f, 20f), entry.Name, OverlayGui.LabelStyle);
         GUI.Label(new Rect(264f, y + 4f, 272f, 20f),
-            $"OUT {entry.Damage:N0}   •   {share:P1}", OverlayGui.RightStyle);
-        GUI.Label(new Rect(54f, y + 25f, 482f, 18f),
-            $"IN {entry.DamageTaken:N0}   •   AVG DPS {dps:N1}   •   AREA {entry.AreaDamage:N0}{delta}",
+            $"Out {entry.Damage:N0}   •   {share:P1}", OverlayGui.RightStyle);
+        GUI.Label(new Rect(60f, y + 25f, 476f, 18f),
+            $"In {entry.DamageTaken:N0}   •   Avg DPS {dps:N1}   •   Area {entry.AreaDamage:N0}{delta}",
             OverlayGui.MutedStyle);
     }
 
@@ -219,16 +217,15 @@ internal sealed class RunSummaryOverlay
     private static void DrawSources(UtilityOverlay.DamageEntry entry, float y)
     {
         Rect panel = new Rect(12f, y, 536f, 116f);
-        OverlayGui.Fill(panel, new Color(0.03f, 0.043f, 0.05f, 0.98f));
-        OverlayGui.Outline(panel, entry.Color);
-        GUI.Label(new Rect(24f, y + 8f, 330f, 20f), $"{entry.Name.ToUpperInvariant()} • TOP SOURCES", OverlayGui.TitleStyle);
+        OverlayGui.DrawPanel(panel, OverlayGui.Panel, entry.Color);
+        GUI.Label(new Rect(24f, y + 8f, 330f, 20f), $"{entry.Name} • Top sources", OverlayGui.TitleStyle);
 
         int count = Math.Min(4, entry.Sources.Count);
         float sourceY = y + 32f;
         for (int i = 0; i < count; i++)
         {
             UtilityOverlay.DamageSourceEntry source = entry.Sources[i];
-            OverlayGui.Fill(new Rect(24f, sourceY + 6f, 7f, 7f), OverlayGui.ElementColor(source.Element));
+            OverlayGui.DrawPip(new Rect(24f, sourceY + 4f, 8f, 8f), OverlayGui.ElementColor(source.Element));
             GUI.Label(new Rect(36f, sourceY, 340f, 19f), source.Name, OverlayGui.LabelStyle);
             float share = entry.Damage > 0f ? source.Damage / entry.Damage : 0f;
             GUI.Label(new Rect(380f, sourceY, 156f, 19f), $"{source.Damage:N0}  •  {share:P0}", OverlayGui.SmallRightStyle);

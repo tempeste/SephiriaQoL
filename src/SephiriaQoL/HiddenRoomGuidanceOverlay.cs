@@ -65,12 +65,11 @@ internal sealed class HiddenRoomGuidanceOverlay
 
         string arrow = DirectionArrow(direction);
         Rect panel = new Rect(marker.x - 55f, marker.y - 22f, 110f, 44f);
-        OverlayGui.Fill(panel, new Color(OverlayGui.Panel.r, OverlayGui.Panel.g, OverlayGui.Panel.b, 0.92f));
-        OverlayGui.Outline(panel, OverlayGui.Accent);
+        OverlayGui.DrawPanel(panel, new Color(OverlayGui.Panel.r, OverlayGui.Panel.g, OverlayGui.Panel.b, 0.94f), OverlayGui.Accent);
         _arrowStyle ??= CenterStyle(17);
         _markerLabelStyle ??= CenterStyle(10);
         GUI.Label(new Rect(panel.x, panel.y + 1f, panel.width, 22f), arrow, _arrowStyle);
-        GUI.Label(new Rect(panel.x, panel.y + 22f, panel.width, 18f), "HIDDEN ROOM", _markerLabelStyle);
+        GUI.Label(new Rect(panel.x, panel.y + 22f, panel.width, 18f), "Hidden room", _markerLabelStyle);
         GUI.matrix = previous;
     }
 

@@ -39,23 +39,26 @@ internal static class JournalSearch
         if (_journalPanel == null || !_journalPanel.gameObject.activeInHierarchy)
             return;
 
-        _windowRect = GUI.Window(43129, _windowRect, DrawWindow, "Artifact journal search");
+        _windowRect = GUI.Window(43129, _windowRect, DrawWindow, GUIContent.none, OverlayGui.WindowStyle);
     }
 
     private static void DrawWindow(int id)
     {
-        string next = GUI.TextField(new Rect(10f, 28f, 218f, 24f), _query ?? string.Empty);
-        if (GUI.Button(new Rect(234f, 28f, 56f, 24f), "Clear"))
+        OverlayGui.DrawHeader(new Rect(4f, 4f, 292f, 22f));
+        GUI.Label(new Rect(10f, 5f, 280f, 20f), "Journal Search", OverlayGui.TitleStyle);
+        string next = GUI.TextField(new Rect(10f, 32f, 218f, 24f), _query ?? string.Empty,
+            OverlayGui.TextFieldStyle);
+        if (GUI.Button(new Rect(234f, 32f, 56f, 24f), "Clear", OverlayGui.ButtonStyle))
             next = string.Empty;
 
-        GUI.Label(new Rect(10f, 55f, 280f, 21f), "Searches localized artifact effect text.");
+        GUI.Label(new Rect(10f, 61f, 280f, 21f), "Searches localized artifact effect text.", OverlayGui.MutedStyle);
         if (!string.Equals(next, _query, StringComparison.Ordinal))
         {
             _query = next;
             _journalItems?.RefreshItems((EItemCategory)0);
         }
 
-        GUI.DragWindow(new Rect(0f, 0f, _windowRect.width, 24f));
+        GUI.DragWindow(new Rect(0f, 0f, _windowRect.width, 28f));
     }
 
     [HarmonyPostfix]

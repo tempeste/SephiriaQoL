@@ -37,6 +37,12 @@ leaf-transfer, hidden-room, and Control Center interfaces have independent
 Auto mode uses normal sizing on Windows and scales up on high-resolution macOS/Retina
 render surfaces. Manual values persist in the BepInEx configuration.
 
+All mod panels share a dark-timber, worn-bronze, and gold fantasy theme with chunky
+pixel-like frames, visible grain, and carved-plank controls inspired by Sephiria's
+menu language. Player colors are paired with names, ranks, percentages, or status
+text so color is never the only indicator.
+The theme is drawn from simple runtime shapes and does not package the game's art.
+
 Every Sephiria QoL shortcut can also be changed in the Control Center's
 **Interface** tab. Click a binding and press the desired key or modifier
 combination; press Escape to cancel or use `×` to leave that action unbound.
@@ -137,7 +143,7 @@ Apple Silicon.
 ### Confirm it loaded
 
 After one launch, check `BepInEx/LogOutput.log` for
-`Loading [Sephiria QoL 0.9.0]`, followed by the current feature-catalog startup
+`Loading [Sephiria QoL 0.9.1]`, followed by the current feature-catalog startup
 message and no plugin exceptions.
 
 ## Multiplayer installation requirements

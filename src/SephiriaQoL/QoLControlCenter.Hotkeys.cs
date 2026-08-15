@@ -13,14 +13,13 @@ internal sealed partial class QoLControlCenter
     {
         Rect row = new Rect(16f, y, 488f, 42f);
         bool capturing = _capturingHotkey == entry;
-        OverlayGui.Fill(row, capturing
-            ? new Color(OverlayGui.Accent.r, OverlayGui.Accent.g, OverlayGui.Accent.b, 0.16f)
-            : OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(row.x, row.y, 4f, row.height), capturing ? OverlayGui.Accent : OverlayGui.Border);
+        OverlayGui.DrawPanel(row, capturing ? OverlayGui.Header : OverlayGui.PanelRaised,
+            capturing ? OverlayGui.Accent : OverlayGui.Border);
         GUI.Label(new Rect(30f, y + 10f, 222f, 22f), title, OverlayGui.LabelStyle);
 
         if (GUI.Button(new Rect(258f, y + 7f, 182f, 28f),
-                capturing ? "PRESS A KEY…" : FormatShortcut(entry.Value), OverlayGui.ButtonStyle))
+                capturing ? "Press a key…" : FormatShortcut(entry.Value),
+                capturing ? OverlayGui.SelectedButtonStyle : OverlayGui.ButtonStyle))
             _capturingHotkey = capturing ? null : entry;
         if (GUI.Button(new Rect(446f, y + 7f, 42f, 28f), "×", OverlayGui.ButtonStyle))
         {
@@ -73,5 +72,5 @@ internal sealed partial class QoLControlCenter
         key == KeyCode.LeftCommand || key == KeyCode.RightCommand;
 
     private static string FormatShortcut(KeyboardShortcut shortcut) =>
-        shortcut.MainKey == KeyCode.None ? "UNBOUND" : shortcut.ToString().ToUpperInvariant();
+        shortcut.MainKey == KeyCode.None ? "Unbound" : shortcut.ToString().ToUpperInvariant();
 }

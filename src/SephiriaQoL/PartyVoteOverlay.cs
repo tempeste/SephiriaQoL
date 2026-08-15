@@ -96,10 +96,8 @@ internal sealed class PartyVoteOverlay
 
     private void DrawWindow(int id)
     {
-        OverlayGui.Fill(new Rect(0f, 0f, 420f, 40f), OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(0f, 39f, 420f, 1f), OverlayGui.Border);
-        OverlayGui.Fill(new Rect(0f, 0f, 5f, 40f), OverlayGui.Accent);
-        GUI.Label(new Rect(16f, 7f, 190f, 24f), "PARTY VOTE", OverlayGui.TitleStyle);
+        OverlayGui.DrawHeader(new Rect(4f, 4f, 412f, 36f));
+        GUI.Label(new Rect(16f, 9f, 190f, 24f), "Party Vote", OverlayGui.TitleStyle);
         OverlayGui.DrawScaleControls(_panelScale, 248f, 9f);
         if (GUI.Button(new Rect(386f, 9f, 23f, 22f), "×", OverlayGui.ButtonStyle))
             _visible = false;
@@ -108,17 +106,17 @@ internal sealed class PartyVoteOverlay
             "Choose the numbered room or loot option. Votes never select anything automatically.",
             OverlayGui.MutedStyle);
 
-        DrawCategory(94f, "ROOM / PATH", category: 0);
-        DrawCategory(164f, "LOOT / REWARD", category: 1);
+        DrawCategory(94f, "Room / path", category: 0);
+        DrawCategory(164f, "Loot / reward", category: 1);
 
         if (NetworkServer.active)
         {
-            GUI.Label(new Rect(16f, 236f, 388f, 20f), "HOST TALLY", OverlayGui.TitleStyle);
+            GUI.Label(new Rect(16f, 236f, 388f, 20f), "Host tally", OverlayGui.TitleStyle);
             GUI.Label(new Rect(16f, 260f, 388f, 20f),
-                $"ROOM   {Tally(0, 1)} / {Tally(0, 2)} / {Tally(0, 3)}     •     LOOT   {Tally(1, 1)} / {Tally(1, 2)} / {Tally(1, 3)}",
+                $"Room  {Tally(0, 1)} / {Tally(0, 2)} / {Tally(0, 3)}     •     Loot  {Tally(1, 1)} / {Tally(1, 2)} / {Tally(1, 3)}",
                 OverlayGui.LabelStyle);
-            GUI.Label(new Rect(16f, 285f, 290f, 20f), $"{_votes.Count} PLAYER VOTE RECORDS", OverlayGui.MutedStyle);
-            if (GUI.Button(new Rect(318f, 282f, 86f, 24f), "CLEAR", OverlayGui.ButtonStyle))
+            GUI.Label(new Rect(16f, 285f, 290f, 20f), $"{_votes.Count} player vote records", OverlayGui.MutedStyle);
+            if (GUI.Button(new Rect(318f, 282f, 86f, 24f), "Clear", OverlayGui.ButtonStyle))
                 _votes.Clear();
         }
         else
@@ -133,7 +131,7 @@ internal sealed class PartyVoteOverlay
 
     private void DrawCategory(float y, string label, byte category)
     {
-        OverlayGui.Fill(new Rect(16f, y, 388f, 56f), OverlayGui.PanelRaised);
+        OverlayGui.DrawPanel(new Rect(16f, y, 388f, 56f));
         GUI.Label(new Rect(28f, y + 6f, 150f, 20f), label, OverlayGui.LabelStyle);
         for (byte choice = 1; choice <= 3; choice++)
         {

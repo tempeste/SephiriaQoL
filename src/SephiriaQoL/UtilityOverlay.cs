@@ -201,9 +201,8 @@ internal sealed class UtilityOverlay
     private void DrawDamageWindow(int id)
     {
         const float width = 380f;
-        OverlayGui.Fill(new Rect(0f, 0f, width, 34f), OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(0f, 33f, width, 1f), OverlayGui.Border);
-        GUI.Label(new Rect(12f, 5f, 170f, 24f), "COMBAT CONTRIBUTION", OverlayGui.TitleStyle);
+        OverlayGui.DrawHeader(new Rect(4f, 4f, width - 8f, 30f));
+        GUI.Label(new Rect(14f, 5f, 170f, 24f), "Combat Contribution", OverlayGui.TitleStyle);
         OverlayGui.DrawScaleControls(_damageScale, 205f, 6f);
         if (GUI.Button(new Rect(340f, 6f, 28f, 22f), _collapsed ? "+" : "−", OverlayGui.ButtonStyle))
             _collapsed = !_collapsed;
@@ -212,10 +211,10 @@ internal sealed class UtilityOverlay
         {
             float total = _damage.Sum(entry => entry.Damage);
             float totalTaken = _damage.Sum(entry => entry.DamageTaken);
-            GUI.Label(new Rect(12f, 38f, 205f, 18f), "RUN TOTALS • CLICK FOR DETAILS", OverlayGui.MutedStyle);
+            GUI.Label(new Rect(12f, 38f, 205f, 18f), "Run totals • click for details", OverlayGui.MutedStyle);
             string totalLabel = _showDamageTaken?.Value == true
-                ? $"OUT {total:N0}  •  IN {totalTaken:N0}"
-                : $"OUT {total:N0}";
+                ? $"Out {total:N0}  •  In {totalTaken:N0}"
+                : $"Out {total:N0}";
             GUI.Label(new Rect(210f, 38f, 158f, 18f), totalLabel, OverlayGui.SmallRightStyle);
 
             float contentHeight = CalculateDamageContentHeight();
@@ -252,25 +251,29 @@ internal sealed class UtilityOverlay
         bool showTaken = _showDamageTaken?.Value == true;
         Rect row = new Rect(10f, y, 360f, showTaken ? 52f : 44f);
         bool selected = entry.Player == _selectedPlayer;
-        OverlayGui.Fill(row, selected ? new Color(entry.Color.r, entry.Color.g, entry.Color.b, 0.17f) : OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(row.x, row.y, 3f, row.height), entry.Color);
-        OverlayGui.Outline(row, selected ? entry.Color : OverlayGui.Border);
+        Color rowFill = selected
+            ? new Color(entry.Color.r * 0.34f, entry.Color.g * 0.34f, entry.Color.b * 0.34f, 1f)
+            : OverlayGui.PanelRaised;
+        OverlayGui.DrawPanel(row, rowFill, selected ? entry.Color : OverlayGui.Border);
+        OverlayGui.DrawPip(new Rect(row.x + 7f, row.y + 8f, 8f, 8f), entry.Color);
 
         if (GUI.Button(row, GUIContent.none, GUIStyle.none))
             _selectedPlayer = selected ? null : entry.Player;
 
-        GUI.Label(new Rect(20f, y + 3f, 25f, 20f), $"{rank:00}", OverlayGui.MutedStyle);
-        GUI.Label(new Rect(48f, y + 3f, 198f, 20f), entry.Name, OverlayGui.LabelStyle);
+        GUI.Label(new Rect(29f, y + 3f, 20f, 20f), $"{rank:00}", OverlayGui.MutedStyle);
+        GUI.Label(new Rect(52f, y + 3f, 194f, 20f), entry.Name, OverlayGui.LabelStyle);
         if (entry.IsDead)
-            GUI.Label(new Rect(246f, y + 3f, 45f, 20f), "DOWN", OverlayGui.MutedStyle);
-        GUI.Label(new Rect(260f, y + 3f, 100f, 20f), $"OUT {entry.Damage:N0}", OverlayGui.RightStyle);
+            GUI.Label(new Rect(246f, y + 3f, 45f, 20f), "Down", OverlayGui.MutedStyle);
+        GUI.Label(new Rect(260f, y + 3f, 100f, 20f), $"Out {entry.Damage:N0}", OverlayGui.RightStyle);
 
         if (showTaken)
-            GUI.Label(new Rect(48f, y + 24f, 180f, 18f), $"IN {entry.DamageTaken:N0}", OverlayGui.MutedStyle);
+            GUI.Label(new Rect(52f, y + 24f, 176f, 18f), $"In {entry.DamageTaken:N0}", OverlayGui.MutedStyle);
 
-        Rect track = new Rect(48f, y + (showTaken ? 43f : 28f), 260f, showTaken ? 4f : 6f);
-        OverlayGui.Fill(track, OverlayGui.Track);
-        OverlayGui.Fill(new Rect(track.x, track.y, track.width * Mathf.Clamp01(ratio), track.height), entry.Color);
+        Rect track = new Rect(52f, y + (showTaken ? 43f : 28f), 256f, showTaken ? 4f : 6f);
+        OverlayGui.DrawInset(track);
+        Rect trackFill = OverlayGui.Inset(track, 1f);
+        OverlayGui.Fill(new Rect(trackFill.x, trackFill.y,
+            trackFill.width * Mathf.Clamp01(ratio), trackFill.height), entry.Color);
         GUI.Label(new Rect(312f, y + (showTaken ? 24f : 20f), 48f, 20f), $"{ratio:P0}", OverlayGui.SmallRightStyle);
     }
 
@@ -279,11 +282,10 @@ internal sealed class UtilityOverlay
         int sourceCount = Math.Min(4, entry.Sources.Count);
         float panelHeight = 140f + sourceCount * 20f;
         Rect panel = new Rect(10f, y, 360f, panelHeight);
-        OverlayGui.Fill(panel, new Color(0.03f, 0.043f, 0.05f, 0.98f));
-        OverlayGui.Outline(panel, entry.Color);
+        OverlayGui.DrawPanel(panel, OverlayGui.Panel, entry.Color);
 
-        GUI.Label(new Rect(20f, y + 8f, 220f, 22f), entry.Name.ToUpperInvariant(), OverlayGui.TitleStyle);
-        GUI.Label(new Rect(242f, y + 8f, 118f, 22f), entry.IsDead ? "DOWN" : "ACTIVE", OverlayGui.RightStyle);
+        GUI.Label(new Rect(20f, y + 8f, 220f, 22f), entry.Name, OverlayGui.TitleStyle);
+        GUI.Label(new Rect(242f, y + 8f, 118f, 22f), entry.IsDead ? "Down" : "Active", OverlayGui.RightStyle);
 
         float playedSeconds = Mathf.Max(1f, GetPlayedSeconds());
         float hpRatio = entry.MaxHp > 0f ? Mathf.Clamp01(entry.Hp / entry.MaxHp) : 0f;
@@ -293,19 +295,20 @@ internal sealed class UtilityOverlay
         GUI.Label(new Rect(20f, y + 54f, 340f, 19f), secondLine, OverlayGui.LabelStyle);
 
         Rect hpTrack = new Rect(20f, y + 77f, 340f, 5f);
-        OverlayGui.Fill(hpTrack, OverlayGui.Track);
-        OverlayGui.Fill(new Rect(hpTrack.x, hpTrack.y, hpTrack.width * hpRatio, hpTrack.height),
-            entry.IsDead ? OverlayGui.Danger : new Color(0.33f, 0.83f, 0.45f, 1f));
+        OverlayGui.DrawInset(hpTrack);
+        Rect hpFill = OverlayGui.Inset(hpTrack, 1f);
+        OverlayGui.Fill(new Rect(hpFill.x, hpFill.y, hpFill.width * hpRatio, hpFill.height),
+            entry.IsDead ? OverlayGui.Danger : OverlayGui.Success);
 
         DrawElementMix(entry, new Rect(20f, y + 90f, 340f, 7f));
-        GUI.Label(new Rect(20f, y + 102f, 170f, 18f), "TOP DAMAGE SOURCES", OverlayGui.MutedStyle);
-        GUI.Label(new Rect(230f, y + 102f, 130f, 18f), "DAMAGE  •  MIX", OverlayGui.SmallRightStyle);
+        GUI.Label(new Rect(20f, y + 102f, 170f, 18f), "Top damage sources", OverlayGui.MutedStyle);
+        GUI.Label(new Rect(230f, y + 102f, 130f, 18f), "Damage  •  mix", OverlayGui.SmallRightStyle);
 
         float sourceY = y + 121f;
         for (int i = 0; i < sourceCount; i++)
         {
             DamageSourceEntry source = entry.Sources[i];
-            OverlayGui.Fill(new Rect(20f, sourceY + 7f, 7f, 7f), OverlayGui.ElementColor(source.Element));
+            OverlayGui.DrawPip(new Rect(20f, sourceY + 5f, 8f, 8f), OverlayGui.ElementColor(source.Element));
             GUI.Label(new Rect(32f, sourceY, 218f, 19f), source.Name, OverlayGui.LabelStyle);
             float sourceRatio = entry.Damage > 0f ? source.Damage / entry.Damage : 0f;
             GUI.Label(new Rect(250f, sourceY, 110f, 19f), $"{source.Damage:N0}  •  {sourceRatio:P0}", OverlayGui.SmallRightStyle);
@@ -318,15 +321,16 @@ internal sealed class UtilityOverlay
 
     private static void DrawElementMix(DamageEntry entry, Rect rect)
     {
-        OverlayGui.Fill(rect, OverlayGui.Track);
+        OverlayGui.DrawInset(rect);
         if (entry.Damage <= 0f)
             return;
 
-        float x = rect.x;
+        Rect inner = OverlayGui.Inset(rect, 1f);
+        float x = inner.x;
         foreach (KeyValuePair<EDamageElementalType, float> element in entry.ElementDamage.OrderByDescending(pair => pair.Value))
         {
-            float width = rect.width * Mathf.Clamp01(element.Value / entry.Damage);
-            OverlayGui.Fill(new Rect(x, rect.y, width, rect.height), OverlayGui.ElementColor(element.Key));
+            float width = inner.width * Mathf.Clamp01(element.Value / entry.Damage);
+            OverlayGui.Fill(new Rect(x, inner.y, width, inner.height), OverlayGui.ElementColor(element.Key));
             x += width;
         }
     }

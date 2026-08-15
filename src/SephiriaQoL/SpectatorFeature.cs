@@ -87,9 +87,8 @@ internal sealed class SpectatorFeature
 
     private void DrawWindow(int id)
     {
-        OverlayGui.Fill(new Rect(0f, 0f, 360f, 68f), OverlayGui.Panel);
-        OverlayGui.Fill(new Rect(0f, 0f, 4f, 68f), OverlayGui.Accent);
-        GUI.Label(new Rect(16f, 7f, 100f, 20f), "SPECTATING", OverlayGui.MutedStyle);
+        OverlayGui.DrawHeader(new Rect(4f, 4f, 352f, 60f));
+        GUI.Label(new Rect(16f, 9f, 100f, 20f), "Spectating", OverlayGui.MutedStyle);
 
         string targetName = _currentTarget != null ? _currentTarget.Name : "Waiting for a living teammate…";
         GUI.Label(new Rect(16f, 28f, 230f, 26f), targetName, OverlayGui.TitleStyle);

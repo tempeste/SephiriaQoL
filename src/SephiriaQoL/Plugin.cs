@@ -9,7 +9,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.9.0";
+    public const string PluginVersion = "0.9.1";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;

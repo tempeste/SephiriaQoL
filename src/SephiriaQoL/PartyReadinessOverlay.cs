@@ -118,16 +118,14 @@ internal sealed class PartyReadinessOverlay
 
     private void DrawWindow(int id, float height)
     {
-        OverlayGui.Fill(new Rect(0f, 0f, 360f, 40f), OverlayGui.PanelRaised);
-        OverlayGui.Fill(new Rect(0f, 39f, 360f, 1f), OverlayGui.Border);
-        OverlayGui.Fill(new Rect(0f, 0f, 5f, 40f), OverlayGui.Accent);
-        GUI.Label(new Rect(16f, 7f, 165f, 24f), "PARTY READINESS", OverlayGui.TitleStyle);
+        OverlayGui.DrawHeader(new Rect(4f, 4f, 352f, 36f));
+        GUI.Label(new Rect(16f, 9f, 165f, 24f), "Party Readiness", OverlayGui.TitleStyle);
         OverlayGui.DrawScaleControls(_panelScale, 190f, 9f);
         if (GUI.Button(new Rect(326f, 9f, 23f, 22f), "×", OverlayGui.ButtonStyle))
             _visible = false;
 
         int ready = _players.Count(player => player.Status == "READY" || player.Status == "AVAILABLE");
-        GUI.Label(new Rect(16f, 44f, 328f, 18f), $"{ready}/{_players.Count} AVAILABLE OR READY", OverlayGui.MutedStyle);
+        GUI.Label(new Rect(16f, 44f, 328f, 18f), $"{ready}/{_players.Count} available or ready", OverlayGui.MutedStyle);
 
         float contentHeight = _players.Count * 34f + 4f;
         Rect viewport = new Rect(0f, 65f, 360f, Mathf.Max(1f, height - 65f));
@@ -136,9 +134,9 @@ internal sealed class PartyReadinessOverlay
         foreach (PlayerState player in _players)
         {
             Rect row = new Rect(10f, y, 340f, 28f);
-            OverlayGui.Fill(row, OverlayGui.PanelRaised);
-            OverlayGui.Fill(new Rect(row.x, row.y, 3f, row.height), player.Color);
-            GUI.Label(new Rect(20f, y + 4f, 156f, 20f), player.Name, OverlayGui.LabelStyle);
+            OverlayGui.DrawPanel(row);
+            OverlayGui.DrawPip(new Rect(row.x + 8f, row.y + 9f, 10f, 10f), player.Color);
+            GUI.Label(new Rect(34f, y + 4f, 142f, 20f), player.Name, OverlayGui.LabelStyle);
             GUI.Label(new Rect(176f, y + 4f, 88f, 20f), player.Status, StatusStyle(player.Status));
             GUI.Label(new Rect(264f, y + 4f, 76f, 20f), player.Floor, OverlayGui.SmallRightStyle);
             y += 34f;
@@ -155,9 +153,9 @@ internal sealed class PartyReadinessOverlay
         GUIStyle style = new GUIStyle(OverlayGui.SmallRightStyle);
         style.normal.textColor = status switch
         {
-            "READY" or "AVAILABLE" => OverlayGui.Accent,
+            "READY" or "AVAILABLE" => OverlayGui.Success,
             "DOWN" => OverlayGui.Danger,
-            "FIGHTING" => new Color(0.98f, 0.68f, 0.22f, 1f),
+            "FIGHTING" => OverlayGui.Accent,
             _ => OverlayGui.Text
         };
         _statusStyles[status] = style;
