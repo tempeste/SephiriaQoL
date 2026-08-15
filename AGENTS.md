@@ -14,10 +14,10 @@ signatures before altering a patch.
 
 Never commit:
 
-- Private gameplay-altering mod source or configuration
+- Unrelated mod source or configuration
 - Game assemblies, BepInEx binaries, downloaded mod DLLs, or archives
 - Build output (`bin`/`obj`), logs, saves, Steam data, or generated configuration
-- Memory-editor tables, memory dumps, decompiler output, tokens, or credentials
+- Runtime inspection tables, memory dumps, decompiler output, tokens, or credentials
 - Source/assets copied from third-party mods
 
 The repository should contain only independent source, documentation, scripts,
@@ -30,8 +30,27 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   native add-on bootstrap trigger.
 - `UtilityOverlay.cs`: run timer and multiplayer combat-contribution display,
   including live dealt and damage-taken run totals.
+- `RunSummaryOverlay.cs` and `RunSummaryHistoryStore.cs`: capture the combat
+  tracker at game over, persist recent local summaries, and compare player output.
+- `BossEntryAnnouncer.cs`: host-only miniboss/boss-start message identifying the
+  player who triggered the encounter through Sephiria's normal custom messages.
+- `FastShopRerollFeature.cs`: rate-limited held hotkey around Sephiria's existing
+  replenishment action; it does not replace shop cost or inventory handling.
+- `HoldToCastFeature.cs`: client-side held input for spell/active-artifact slots and
+  Cast Mode left-click. It waits for native cooldown readiness before calling the
+  existing integrated action controller.
+- `PartyReadinessOverlay.cs`: client-side dashboard over Sephiria's synchronized
+  loading, menu, combat, ready, and floor state.
+- `HiddenRoomGuidanceOverlay.cs`: cached client-side tracking of generated hidden
+  entrances with a scalable nearest-entrance marker.
+- `PartyVoteOverlay.cs`: explicit two-byte room/loot votes; the host keeps a
+  display-only tally and never changes the run automatically.
+- `LeafTransferOverlay.cs`: confirmed UI around Sephiria's native currency transfer
+  with host-side identity, balance, amount, floor, life-state, and rate validation.
+- `AdditionalPresetSlotsFeature.cs`: raises the native dynamic preset limit while
+  preserving Sephiria's indexed storage and all existing slots.
 - `QoLControlCenter.cs`: F11/tabbed configuration UI for everyday, multiplayer,
-  Party Scaling, and independent overlay sizing controls.
+  run-tool, Party Scaling, and independent overlay sizing controls.
 - `JournalSearch.cs`: artifact journal text filtering and related Harmony patch.
 - `JustAnvilFeature.cs`: guarantees an anvil in the first playable room choice
   while preserving the displaced room later in the floor graph.
@@ -75,6 +94,19 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   prevent the stutter seen in earlier experiments.
 - Native add-on loading must remain idempotent. Check `AddOnLoader.LoadedMods`
   before calling `LoadAll`.
+- Fast shop reroll must call `UI_ShopPanel.DoReplenishment`; do not duplicate or
+  bypass its Sapphire, availability, or inventory logic.
+- Hold-to-cast must use the player's current Input System actions and the native
+  integrated action controller. Never hard-code 1–8 bindings or send retries while
+  a slot is unavailable.
+- Boss-entry announcements must remain host-only and use Sephiria's targeted
+  custom-message path so unmodified clients can receive them.
+- Voting must remain explicit and advisory. Validate its compact Mirror message on
+  the host, and never select a room or reward from a tally.
+- Leaf transfers must use `UnitAvatar.GiveMoney`; validate both the host's direct
+  path and its generated client command before Sephiria changes synchronized money.
+- Additional presets must extend `UI_PresetPanel.GetSlotLimitCount`; do not replace
+  or rewrite profile serialization.
 - Party Scaling must remain host-authoritative, disabled by default, and applied
   only to newly generated/spawned enemies. Preserve the normal-enemy phase cap and
   do not duplicate minibosses, bosses, or training targets.
@@ -127,6 +159,6 @@ tested with a real large lobby on actual Apple Silicon hardware.
 1. Update `PluginVersion` for behavior changes.
 2. Update README/config documentation when user-visible behavior changes.
 3. Build with zero warnings and errors.
-4. Confirm no ignored, generated, proprietary, or private files are staged.
+4. Confirm no ignored, generated, proprietary, or unrelated files are staged.
 5. Smoke-test locally when runtime behavior changed.
-6. Commit intentionally and push `main` to the private GitHub remote.
+6. Commit intentionally and push `main` to the configured GitHub remote.

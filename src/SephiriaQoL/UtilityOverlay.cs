@@ -10,14 +10,14 @@ namespace SephiriaQoL;
 
 internal sealed class UtilityOverlay
 {
-    private sealed class DamageSourceEntry
+    internal sealed class DamageSourceEntry
     {
         internal string Name;
         internal EDamageElementalType Element;
         internal float Damage;
     }
 
-    private sealed class DamageEntry
+    internal sealed class DamageEntry
     {
         internal PlayerAvatar Player;
         internal string Name;
@@ -72,8 +72,28 @@ internal sealed class UtilityOverlay
             return;
         _nextRefresh = Time.unscaledTime + 0.5f;
 
+        RefreshDamageEntries(force: false);
+    }
+
+    internal List<DamageEntry> CaptureDamageSnapshot()
+    {
+        RefreshDamageEntries(force: true);
+        return _damage.Select(CloneEntry).ToList();
+    }
+
+    internal static float GetPlayedSeconds()
+    {
+        if (DungeonManager.Instance == null)
+            return 0f;
+
+        return PlayedRealtimeField?.GetValue(DungeonManager.Instance) is float value ? Mathf.Max(0f, value) : 0f;
+    }
+
+    private void RefreshDamageEntries(bool force)
+    {
+
         _damage.Clear();
-        if (_showDamage?.Value != true || PlayerSpawner.MultiplayerList == null)
+        if ((!force && _showDamage?.Value != true) || PlayerSpawner.MultiplayerList == null)
             return;
 
         foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
@@ -123,6 +143,32 @@ internal sealed class UtilityOverlay
         _damage.Sort((a, b) => b.Damage.CompareTo(a.Damage));
         if (_selectedPlayer != null && _damage.All(entry => entry.Player != _selectedPlayer))
             _selectedPlayer = null;
+    }
+
+    private static DamageEntry CloneEntry(DamageEntry source)
+    {
+        DamageEntry copy = new DamageEntry
+        {
+            Name = source.Name,
+            Damage = source.Damage,
+            AreaDamage = source.AreaDamage,
+            DamageTaken = source.DamageTaken,
+            Hp = source.Hp,
+            MaxHp = source.MaxHp,
+            IsDead = source.IsDead,
+            Color = source.Color
+        };
+
+        copy.Sources.AddRange(source.Sources.Select(entry => new DamageSourceEntry
+        {
+            Name = entry.Name,
+            Element = entry.Element,
+            Damage = entry.Damage
+        }));
+        foreach (KeyValuePair<EDamageElementalType, float> pair in source.ElementDamage)
+            copy.ElementDamage[pair.Key] = pair.Value;
+
+        return copy;
     }
 
     internal void OnGUI()
@@ -335,14 +381,6 @@ internal sealed class UtilityOverlay
 
         _damageSourceNames[id] = id;
         return id;
-    }
-
-    private static float GetPlayedSeconds()
-    {
-        if (DungeonManager.Instance == null)
-            return 0f;
-
-        return PlayedRealtimeField?.GetValue(DungeonManager.Instance) is float value ? Mathf.Max(0f, value) : 0f;
     }
 
     private void EnsureTimerStyle()

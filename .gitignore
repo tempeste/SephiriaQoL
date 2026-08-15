@@ -6,13 +6,8 @@ obj/
 *.suo
 .DS_Store
 
-# Never place private gameplay-altering work in this repository.
-private/
-private-mods/
-**/*PrivateMod*/
-**/*PrivateMod*.*
-**/*SoloMod*/
-**/*SoloMod*.*
+# Never place unrelated local work in this repository.
+local-only/
 *.ct
 
 # Third-party binaries are referenced from the local game installation only.

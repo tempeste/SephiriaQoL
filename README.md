@@ -1,28 +1,47 @@
 # Sephiria QoL
 
-Clean BepInEx implementations of quality-of-life features for Sephiria.
+Independent BepInEx quality-of-life features for Sephiria, packaged in one
+`SephiriaQoL.dll`.
 
-Current scope:
+## Feature catalog
 
-- Run timer and color-coded multiplayer dealt/damage-taken display
-- Click-through player damage details: run/area totals, DPS, damage taken, HP,
-  elemental mix, and top damage sources
-- Guaranteed first-choice anvil room
-- Native `AddOns` compatibility alongside BepInEx
-- Journal keyword search
-- In-game tablet/inventory optimizer panel (F10)
-- Multiplayer spectator camera after death
-- Configurable 2–16 player rooms with a compact large-party HUD
-- A unified QoL Control Center for toggles and overlay sizing
-- Optional host-side Party Scaling for enemy health and normal-enemy counts
-- Extended run leveling for the additional XP available in high-density runs
+| Feature | What it does | Default | Shortcut |
+| --- | --- | --- | --- |
+| QoL Control Center | Central settings, independent UI scaling, and customizable shortcuts | Available | `F11` or **QOL** |
+| Run timer | Displays elapsed run time | On | — |
+| Combat contribution | Color-coded dealt/taken bars with click-through DPS, HP, element, area, and source details | On | Click a player bar |
+| Run summary and history | Shows the team result at game over and retains recent runs locally for comparison | On | `F8` |
+| Encounter announcer | Names the first player to trigger a miniboss or boss room | On | — |
+| Fast shop reroll | Repeats Sephiria's normal Sapphire-shop reroll while held | On | `R` |
+| Hold to cast | Recasts held spell/artifact slots when ready; supports keys 1–8 and Cast Mode left-click | On | Existing game bindings |
+| Party readiness | Shows synchronized loading, ready, menu, combat, downed, and floor states | On | `F5` |
+| Hidden-room guidance | Points toward the nearest registered undiscovered entrance | On | — |
+| Party voting | Collects manual room/loot votes and shows the tally to the host without auto-selecting | On | `F7` |
+| Leaf transfer | Confirmed same-floor transfers with host-side identity, balance, amount, and rate validation | Off | `F6` |
+| Additional preset slots | Extends Sephiria's native preset list from 15 to 30 by default, configurable up to 50 | On | — |
+| First-choice anvil | Guarantees an anvil in the first playable room choice without deleting the displaced room | On | — |
+| Journal search | Filters the artifact journal by keyword | On | — |
+| Tablet optimizer | Uses Sephiria's own inventory arranger with additional positional-synergy scoring | On | `F10` |
+| Spectator camera | Follows living teammates after the local player is defeated | On | Arrow keys |
+| 2–16 player rooms | Expands the host lobby selector and connection capacity | On, max 16 | — |
+| Compact party roster | Scales Sephiria's multiplayer HUD as the room fills | On | — |
+| Party Scaling | Lets the host multiply new enemy health and normal-enemy counts | Off | — |
+| Extended leveling | Extends the run XP table beyond level 30 for high-density runs | On, max 100 | — |
+| Native add-on bootstrap | Repairs local `AddOns` startup ordering when Sephiria's loader missed them | Automatic | — |
 
 Use the compact **QOL** button or press `F11` to open the Control Center. It groups
-the everyday, multiplayer, and interface settings in one draggable panel. The
-damage chart, tablet optimizer, spectator panel, and Control Center have independent
+the everyday, multiplayer, run-tool, and interface settings in one draggable panel.
+The damage chart, run summary, tablet optimizer, spectator, readiness, voting,
+leaf-transfer, hidden-room, and Control Center interfaces have independent
 `− / AUTO / +` scale controls. Click a percentage to restore automatic sizing.
 Auto mode uses normal sizing on Windows and scales up on high-resolution macOS/Retina
 render surfaces. Manual values persist in the BepInEx configuration.
+
+Every Sephiria QoL shortcut can also be changed in the Control Center's
+**Interface** tab. Click a binding and press the desired key or modifier
+combination; press Escape to cancel or use `×` to leave that action unbound.
+Changes are saved to the normal BepInEx configuration immediately. Hold to cast
+follows Sephiria's own spell bindings instead.
 
 The optimizer exposes Sephiria's own server-authoritative layout routine. It scores
 active charm levels and tablet bonuses, then adds condition-aware scoring for
@@ -41,15 +60,15 @@ This repository intentionally excludes permanent profile/save editing,
 third-party mod binaries, and decompiler output. Implementations here are
 maintained independently against the game's runtime APIs and observed behavior.
 
-## One-command setup
+## Installation
 
-Friends do not need to hunt down individual mod files. Clone this repository and
-run the installer for the current platform. It installs the pinned BepInEx release
-when needed, then builds and installs the single `SephiriaQoL.dll` containing the
-QoL, spectator, 16-player, Party Scaling, and extended-leveling features.
+Clone this repository and run the installer for the current platform. It installs
+the pinned BepInEx release when needed, builds the current source, and copies the
+single `SephiriaQoL.dll` into the game. Rerunning it after an update replaces the
+DLL while preserving the existing BepInEx configuration.
 
-The installers verify the BepInEx download with a committed SHA-256 hash. This
-repository does not copy or redistribute third-party mod binaries.
+BepInEx downloads are verified against the SHA-256 hash committed to this
+repository. Third-party mod binaries are not bundled or redistributed.
 
 Prerequisites:
 
@@ -68,15 +87,22 @@ Close Sephiria, then run in PowerShell:
 ```powershell
 git clone https://github.com/tempeste/SephiriaQoL.git
 cd SephiriaQoL
-powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
+.\scripts\install-windows.ps1
 ```
 
 The script detects the normal Steam location plus common `D:` and `E:` Steam
 libraries. For another location:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 `
-  -GameDir "F:\SteamLibrary\steamapps\common\Sephiria"
+.\scripts\install-windows.ps1 -GameDir "F:\SteamLibrary\steamapps\common\Sephiria"
+```
+
+The `powershell -ExecutionPolicy Bypass -File` prefix is not needed from an
+already-open PowerShell prompt. If Windows blocks local scripts, use it once as a
+fallback:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 ```
 
 Launch Sephiria normally through Steam afterward.
@@ -111,14 +137,24 @@ Apple Silicon.
 ### Confirm it loaded
 
 After one launch, check `BepInEx/LogOutput.log` for
-`Loading [Sephiria QoL 0.7.1]`. The plugin's next line lists its enabled QoL,
-spectator, and 16-player features.
+`Loading [Sephiria QoL 0.9.0]`, followed by the current feature-catalog startup
+message and no plugin exceptions.
 
-## Who needs each mod?
+## Multiplayer installation requirements
 
 | Feature | Host | Other players | Why |
 | --- | --- | --- | --- |
+| Control Center, UI scaling, and hotkey settings | Not required | Only the player using them | Settings and rendering stay on that machine. |
 | Run timer, damage chart/details, journal search | Not required | Only the player who wants the UI | These read synchronized game state and draw locally. |
+| End-of-run summary/history | Not required | Only the player who wants the UI | Each client stores its own recent summaries in the BepInEx config directory. |
+| Encounter announcer | Required for announcements | Not required | The host identifies the first player who starts a miniboss or boss encounter and sends Sephiria's normal custom message to the room. |
+| Fast shop reroll | Not required | Only the player using it | This repeats Sephiria's existing local shop action, including its normal escalating Sapphire costs and checks. |
+| Hold to cast | Not required | Only the player using it | It follows that player's existing input bindings and waits for locally synchronized cooldown readiness before using Sephiria's normal cast path. |
+| Party readiness | Not required | Only the player who wants the UI | The panel reads player states already synchronized by Sephiria. |
+| Hidden-room guidance | Not required | Only the player who wants the marker | Entrance tracking and rendering are entirely client-side. |
+| Room/loot voting | Required to collect and show votes | Required for each voter | Votes are explicit plugin messages. Only the host displays the tally; no room or reward is selected automatically. |
+| Leaf transfer | Required and must enable it | Required for the sender | The sender uses Sephiria's currency transfer, while the host validates identity, amount, balance, floor, life state, and rate. The recipient only needs normal game synchronization. |
+| Additional preset slots | Not required | Only the player using extra slots | Sephiria's existing indexed preset UI/storage is extended locally. Disabling the feature hides slots above 15 but does not delete their data. |
 | Tablet optimizer | Not required | Only the player using it | It calls Sephiria's built-in server-authoritative request for that player's inventory. |
 | Spectator camera | Not required | Only the player who wants to spectate after dying | Camera selection and controls are local. |
 | JustAnvil | Required to change the shared run | Not required | Remote clients are explicitly skipped; the host owns the floor graph. |
@@ -127,9 +163,10 @@ spectator, and 16-player features.
 | Party Scaling | Required | Not required | Enemy health and spawn plans are changed only by the host and synchronized through Sephiria's normal networking. |
 | Extended leveling | Required above level 30 | Recommended | The host owns XP and level progression. Installing on clients keeps their XP bar and maximum-level text consistent above 30. |
 
-There are no QoL features that must be installed by every player. For the most
-consistent UI in a 5–16 player room, install Sephiria QoL on everyone, but only the
-host is required for the larger capacity.
+No feature requires every player in the room to install the plugin. Voting needs
+the host plus each player who wants to vote; leaf transfer needs the host plus the
+sender. For the most consistent UI in a 5–16 player room, install Sephiria QoL on
+everyone, but only the host is required for the larger capacity.
 
 ## Usage and configuration
 
@@ -150,6 +187,52 @@ The `[Utility]` section controls the run timer and combat tracker.
 `ShowDamageTaken` is enabled by default and adds every active player's cumulative
 incoming damage plus the party's total incoming damage to the live contribution
 panel. Click a player for their HP, average DPS, elemental mix, and top sources.
+
+The `[RunSummary]` section controls the team summary that opens with Sephiria's
+game-over screen. Click a player row for their four highest damage sources. Press
+`F8` to reopen the latest locally saved summary, then use the arrow buttons to
+browse up to 20 runs by default. Player rows compare dealt damage with the previous
+saved run when the same name is present. History is stored locally at
+`BepInEx/config/dev.tempeste.sephiria.qol.run-history`.
+
+The `[BossAnnouncer]` section controls host-only miniboss/boss entry messages. Only
+the first player who starts each encounter is announced; clients do not need the
+plugin to receive it.
+
+The `[FastShopReroll]` section enables held rerolls, sets the hotkey (`R` by
+default), and controls the repeat interval. Hold the key while a Sapphire shop is
+open. Every repeat calls Sephiria's normal reroll action, so escalating costs,
+insufficient-funds checks, purchased-item checks, effects, and inventory refreshes
+remain unchanged.
+
+The `[HoldToCast]` section is client-side and enabled by default. Hold any of the
+game's current quick-cast bindings for slots 1–8, or hold left-click in Cast Mode.
+Spells and active artifacts retry once their native cooldown and cast checks are
+ready. Cooldown-only failure feedback is suppressed while the input remains held;
+mana and other failures are left unchanged.
+
+The `[PartyReadiness]` panel opens with `F5`. It shows each connected player's
+loading, ready, menu, combat, downed, and floor state using data Sephiria already
+synchronizes. It is client-side and does not send readiness commands.
+
+`[HiddenRoomGuidance]` is client-side. It registers hidden entrances as Sephiria
+creates them, polls those cached references twice per second, and points toward the
+nearest undiscovered entrance without scanning the scene every frame.
+
+The `[PartyVoting]` panel opens with `F7`. Players vote for numbered room/path or
+loot/reward choices; a host with the same QoL version sees the `1 / 2 / 3` tally.
+The overlay never clicks, chooses, or changes the run. Use **CLEAR** on the host
+between decisions.
+
+The `[LeafTransfer]` panel opens with `F6` and is disabled by default. Enable it on
+the host and sender, choose an amount, then click **SEND** and **CONFIRM** on the
+same teammate. The host rejects non-positive or oversized amounts, insufficient
+balances, self-transfers, downed players, different floors, and rapid repeats.
+
+The `[PresetSlots]` section raises Sephiria's native limit from 15 to 30 by default
+and supports up to 50. The game already stores preset slots under indexed keys, so
+existing 1–15 data is unchanged. If the feature is disabled later, higher slots
+are hidden rather than erased and return when the limit is raised again.
 
 The `[MaxPlayer]` section controls the independent large-party implementation:
 `Enabled` toggles it, `MaximumPlayers` accepts 2–16, and
@@ -175,29 +258,17 @@ normal server-authoritative XP, level-up rewards, healing, inventory bonuses, an
 network synchronization remain in control. For consistent level UI above 30,
 install Sephiria QoL on every player in the room.
 
-## Future plans
+## Potential refinements
 
 These are planning priorities rather than release promises. Features will be
 implemented independently against Sephiria's runtime APIs; third-party binaries
 and source are not incorporated into this repository.
 
-### Next candidates
-
-1. **Fast shop reroll** — streamline repeated Sapphire-shop rerolls while keeping
-   Sephiria's normal costs, inventory updates, and server authority.
-2. **Boss-entry announcer** — show a system message identifying the first player
-   to enter a miniboss room, helping large parties coordinate before engagement.
-3. **End-of-run team summary** — reuse the combat tracker to show dealt damage,
-   damage taken, average DPS, contribution, and top sources when a run ends.
-
-### Later candidates
-
-- **Visual hidden-room guidance** — optionally highlight or point toward the
-  current floor's undiscovered entrance as an extension of the existing tracker.
-- **Host-authoritative leaf transfer** — provide confirmed player-to-player
-  transfers with limits, validation, and visible transaction messages.
-- **Preset-slot expansion** — increase the number of saved presets only after the
-  profile serialization and backward-compatibility behavior are fully audited.
+- Context labels for votes when stable room/reward names can be read safely.
+- Optional visible transfer receipts without weakening host validation.
+- Named run-history comparison filters and export.
+- More precise hidden-room distance display after its generated-room coordinate
+  behavior has been exercised across every floor type.
 
 ### Planning constraints
 
@@ -207,7 +278,9 @@ and source are not incorporated into this repository.
 - Every user-facing option is configurable through BepInEx and the Control Center.
 
 Current idea references include the
-[Taehyun mod catalog](https://github.com/TaeHyun015/Sephiria-Mods-By-KimJangee/blob/main/mod_list.json)
+[Taehyun mod catalog](https://github.com/TaeHyun015/Sephiria-Mods-By-KimJangee/blob/main/mod_list.json),
+the
+[Hold to Cast on Cooldown behavior description](https://www.nexusmods.com/sephiria/mods/5),
 and the
 [Mira mod-manager catalog](https://github.com/Mira090/SephiriaModManager-Releases/blob/main/Mods/mod_list.json).
 
