@@ -55,13 +55,11 @@ internal sealed class TabletOptimizerOverlay
             return;
 
         _nextPlayerLookup = Time.unscaledTime + 0.5f;
-        PlayerAvatar candidate = null;
-        if (NetworkClient.localPlayer != null)
-            candidate = NetworkClient.localPlayer.GetComponent<PlayerAvatar>();
-        else if (!NetworkClient.active)
-            candidate = UnityEngine.Object.FindFirstObjectByType<PlayerAvatar>(FindObjectsInactive.Exclude);
-
-        _player = candidate;
+        PlayerAvatar candidate = FindLocalPlayer();
+        if (candidate != null)
+            _player = candidate;
+        else if (_player == null || !_player.gameObject.activeInHierarchy || _player.Inventory == null)
+            _player = null;
     }
 
     internal void OnGUI()
@@ -157,5 +155,33 @@ internal sealed class TabletOptimizerOverlay
             _statusUntil = Time.unscaledTime + 8f;
             _logger.LogError($"Tablet optimization failed: {exception}");
         }
+    }
+
+    private PlayerAvatar FindLocalPlayer()
+    {
+        if (NetworkClient.localPlayer != null)
+        {
+            PlayerAvatar networkPlayer = NetworkClient.localPlayer.GetComponent<PlayerAvatar>() ??
+                                         NetworkClient.localPlayer.GetComponentInChildren<PlayerAvatar>();
+            if (networkPlayer != null)
+                return networkPlayer;
+        }
+
+        if (PlayerSpawner.MultiplayerList != null)
+        {
+            foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
+            {
+                PlayerAvatar player = spawner?.PlayerAvatar;
+                if (player != null && player.isLocalPlayer)
+                    return player;
+            }
+        }
+
+        if (_player != null && _player.gameObject.activeInHierarchy && _player.Inventory != null)
+            return _player;
+
+        return !NetworkClient.active
+            ? UnityEngine.Object.FindFirstObjectByType<PlayerAvatar>(FindObjectsInactive.Exclude)
+            : null;
     }
 }

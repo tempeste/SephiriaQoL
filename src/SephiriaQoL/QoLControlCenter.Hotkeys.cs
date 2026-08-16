@@ -59,9 +59,9 @@ internal sealed partial class QoLControlCenter
 
     private static void AddHeldModifier(ICollection<KeyCode> modifiers, KeyCode left, KeyCode right)
     {
-        if (Input.GetKey(left))
+        if (ShortcutInput.IsKeyPressed(left))
             modifiers.Add(left);
-        else if (Input.GetKey(right))
+        else if (ShortcutInput.IsKeyPressed(right))
             modifiers.Add(right);
     }
 

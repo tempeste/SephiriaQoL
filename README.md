@@ -143,7 +143,7 @@ Apple Silicon.
 ### Confirm it loaded
 
 After one launch, check `BepInEx/LogOutput.log` for
-`Loading [Sephiria QoL 0.9.2]`, followed by the current feature-catalog startup
+`Loading [Sephiria QoL 0.9.7]`, followed by the current feature-catalog startup
 message and no plugin exceptions.
 
 ## Multiplayer installation requirements
@@ -179,8 +179,9 @@ everyone, but only the host is required for the larger capacity.
 Open the Control Center with the **QOL** button or `F11`. Changes are saved
 immediately. The tablet optimizer also has its own `F10` shortcut. It changes only
 the requesting player's inventory, but it rearranges the whole inventory rather
-than tablets alone; press `F10` again or use its `×` button to close it. Shortcuts
-remain responsive while unrelated gameplay keys are held. Keep
+than tablets alone. Its local-player reference survives temporary network-identity
+gaps; press `F10` again or use its `×` button to close it. Shortcuts remain
+responsive while unrelated gameplay keys are held. Keep
 `Prefer positional relic synergies` enabled to make
 productive damage and support links outrank raw levels on unrelated artifacts.
 Effects whose best side depends on the player's chosen element (such as Fire/Ice
@@ -224,11 +225,11 @@ loading, ready, menu, combat, downed, and floor state using data Sephiria alread
 synchronizes. It is client-side and does not send readiness commands.
 
 `[HiddenRoomGuidance]` is client-side. It registers hidden entrances as Sephiria
-creates them and performs a short series of fallback discovery scans when the
-observed player changes floors. This lets remote clients recover entrances whose
-generation callbacks ran only on the host. It then polls the cached references
-twice per second and points toward the nearest undiscovered entrance without
-scanning the scene every frame.
+creates them and preserves that event-driven path. If a remote client misses those
+callbacks and has no registered target, it scans only active, breakable entrances
+with enabled colliders every two seconds without clearing the original cache. It
+then points toward the nearest undiscovered entrance without scanning the scene
+every frame.
 
 The `[PartyVoting]` panel opens with `F7`. Players vote for numbered room/path or
 loot/reward choices; a host with the same QoL version sees the `1 / 2 / 3` tally.

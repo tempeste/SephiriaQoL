@@ -9,7 +9,7 @@ namespace SephiriaQoL;
 
 internal sealed class HiddenRoomGuidanceOverlay
 {
-    private const int FloorDiscoveryAttempts = 6;
+    private const float FallbackScanInterval = 2f;
 
     private static HiddenRoomGuidanceOverlay _instance;
 
@@ -18,9 +18,7 @@ internal sealed class HiddenRoomGuidanceOverlay
     private readonly List<Component> _entrances = new List<Component>();
     private Component _nearest;
     private float _nextRefresh;
-    private float _nextDiscoveryScan;
-    private int _discoveryAttemptsRemaining;
-    private string _observedFloorGuid;
+    private float _nextFallbackScan;
     private GUIStyle _arrowStyle;
     private GUIStyle _markerLabelStyle;
 
@@ -37,19 +35,17 @@ internal sealed class HiddenRoomGuidanceOverlay
             return;
 
         _nextRefresh = Time.unscaledTime + 0.5f;
+        _entrances.RemoveAll(target => !IsUndiscovered(target));
         PlayerAvatar observer = GameCamera.Instance?.Observer;
-        RefreshFloor(observer);
-        if (_discoveryAttemptsRemaining > 0 && Time.unscaledTime >= _nextDiscoveryScan)
+        if (observer != null && _entrances.Count == 0 && Time.unscaledTime >= _nextFallbackScan)
         {
-            DiscoverExistingEntrances();
-            _discoveryAttemptsRemaining--;
-            _nextDiscoveryScan = Time.unscaledTime + 0.75f;
+            DiscoverActiveEntrances(observer);
+            _nextFallbackScan = Time.unscaledTime + FallbackScanInterval;
         }
 
-        _entrances.RemoveAll(IsResolved);
         _nearest = observer == null
             ? null
-            : _entrances.Where(IsUndiscovered).OrderBy(target =>
+            : _entrances.OrderBy(target =>
                 Vector2.SqrMagnitude((Vector2)target.transform.position - (Vector2)observer.transform.position))
                 .FirstOrDefault();
     }
@@ -98,44 +94,43 @@ internal sealed class HiddenRoomGuidanceOverlay
             _entrances.Add(entrance);
     }
 
-    private void RefreshFloor(PlayerAvatar observer)
+    private void DiscoverActiveEntrances(PlayerAvatar observer)
     {
-        string floorGuid = observer?.currentFloorGuid ?? string.Empty;
-        if (string.Equals(floorGuid, _observedFloorGuid, StringComparison.Ordinal))
-            return;
+        FloorGenerator currentFloor = string.IsNullOrEmpty(observer.currentFloorGuid)
+            ? null
+            : FloorGenerator.FindByGuid(observer.currentFloorGuid);
 
-        _observedFloorGuid = floorGuid;
-        _entrances.Clear();
-        _nearest = null;
-        _discoveryAttemptsRemaining = string.IsNullOrEmpty(floorGuid) ? 0 : FloorDiscoveryAttempts;
-        _nextDiscoveryScan = Time.unscaledTime + 0.25f;
-    }
-
-    private void DiscoverExistingEntrances()
-    {
         foreach (HiddenRoomTriggerCollider collider in UnityEngine.Object.FindObjectsByType<HiddenRoomTriggerCollider>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
-            Register(collider);
+                     FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (IsValidFallbackEntrance(collider) && BelongsToFloor(currentFloor, collider.transform.position))
+                Register(collider);
+        }
 
         foreach (BreakableProp_HiddenPortal portal in UnityEngine.Object.FindObjectsByType<BreakableProp_HiddenPortal>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Exclude, FindObjectsSortMode.None))
         {
-            if (portal.PassageDir == HiddenPortalSide.Entrance)
+            if (IsValidFallbackEntrance(portal) && BelongsToFloor(currentFloor, portal.transform.position))
                 Register(portal);
         }
     }
 
-    private static bool IsResolved(Component target)
+    private static bool IsValidFallbackEntrance(HiddenRoomTriggerCollider collider) =>
+        IsUndiscovered(collider) && (collider.boxCollider == null || collider.boxCollider.enabled);
+
+    private static bool IsValidFallbackEntrance(BreakableProp_HiddenPortal portal) =>
+        IsUndiscovered(portal) && portal.isConnected && portal.hp > 0f && portal.CanBeBroken;
+
+    private static bool BelongsToFloor(FloorGenerator floor, Vector3 worldPosition)
     {
-        if (target == null)
+        if (floor == null || !floor.GenerateSuccess)
             return true;
-        if (!target.gameObject.activeInHierarchy)
-            return false;
-        if (target is HiddenRoomTriggerCollider collider)
-            return collider.hp <= 0f;
-        if (target is BreakableProp_HiddenPortal portal)
-            return portal.IsBroken;
-        return true;
+
+        Vector2 local = (Vector2)(worldPosition - floor.transform.position);
+        Vector2 lower = floor.cameraBoundaryDownLeft - Vector2.one;
+        Vector2 upper = floor.cameraBoundaryUpRight + Vector2.one;
+        return local.x >= lower.x && local.x <= upper.x &&
+               local.y >= lower.y && local.y <= upper.y;
     }
 
     private static bool IsUndiscovered(Component target)
