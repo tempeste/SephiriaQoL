@@ -167,7 +167,7 @@ internal sealed partial class QoLControlCenter
 
     internal void Update()
     {
-        if (_hotkey.Value.IsDown())
+        if (ShortcutInput.IsDown(_hotkey.Value))
             _visible.Value = !_visible.Value;
     }
 

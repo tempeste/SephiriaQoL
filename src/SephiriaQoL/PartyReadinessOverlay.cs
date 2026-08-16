@@ -37,7 +37,7 @@ internal sealed class PartyReadinessOverlay
 
     internal void Update()
     {
-        if (_hotkey.Value.IsDown())
+        if (ShortcutInput.IsDown(_hotkey.Value))
             _visible = !_visible;
 
         if (Time.unscaledTime < _nextRefresh)

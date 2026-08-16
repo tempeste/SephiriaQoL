@@ -51,7 +51,7 @@ internal sealed class PartyVoteOverlay
 
     internal void Update()
     {
-        if (_hotkey.Value.IsDown())
+        if (ShortcutInput.IsDown(_hotkey.Value))
             _visible = !_visible;
 
         if (NetworkServer.active && !_serverWasActive)

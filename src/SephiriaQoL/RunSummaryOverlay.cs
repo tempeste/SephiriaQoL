@@ -45,7 +45,7 @@ internal sealed class RunSummaryOverlay
 
     internal void Update()
     {
-        if (_enabled.Value != true || !_historyHotkey.Value.IsDown() || _history.Count == 0)
+        if (_enabled.Value != true || !ShortcutInput.IsDown(_historyHotkey.Value) || _history.Count == 0)
             return;
 
         if (_visible)

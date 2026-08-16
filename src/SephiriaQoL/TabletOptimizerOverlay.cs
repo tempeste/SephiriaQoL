@@ -23,6 +23,7 @@ internal sealed class TabletOptimizerOverlay
     private float _statusUntil;
     private string _status = "Open a run to optimize your inventory.";
     private bool _guiLogged;
+    private bool _toggleHotkeyHeld;
 
     internal TabletOptimizerOverlay(
         ConfigEntry<bool> showPanel,
@@ -45,8 +46,10 @@ internal sealed class TabletOptimizerOverlay
 
     internal void Update()
     {
-        if (_toggleHotkey.Value.IsDown())
+        bool toggleHotkeyPressed = ShortcutInput.IsPressed(_toggleHotkey.Value);
+        if (toggleHotkeyPressed && !_toggleHotkeyHeld)
             _showPanel.Value = !_showPanel.Value;
+        _toggleHotkeyHeld = toggleHotkeyPressed;
 
         if (Time.unscaledTime < _nextPlayerLookup)
             return;
@@ -91,7 +94,9 @@ internal sealed class TabletOptimizerOverlay
 
         OverlayGui.DrawHeader(new Rect(4f, 4f, 352f, 32f));
         GUI.Label(new Rect(12f, 7f, 165f, 24f), "Tablet Optimizer", OverlayGui.TitleStyle);
-        OverlayGui.DrawScaleControls(_panelScale, 222f, 6f);
+        OverlayGui.DrawScaleControls(_panelScale, 190f, 6f);
+        if (GUI.Button(new Rect(326f, 6f, 22f, 22f), "×", OverlayGui.ButtonStyle))
+            _showPanel.Value = false;
 
         GUI.Label(new Rect(12f, 42f, 336f, 40f),
             "Rearranges your whole inventory to maximize useful damage links, charm levels, and tablet bonuses.",

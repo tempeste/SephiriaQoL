@@ -54,9 +54,9 @@ internal sealed class SpectatorFeature
         }
 
         _wasSpectating = true;
-        if (_previousHotkey.Value.IsDown())
+        if (ShortcutInput.IsDown(_previousHotkey.Value))
             ChangeTarget(-1);
-        if (_nextHotkey.Value.IsDown())
+        if (ShortcutInput.IsDown(_nextHotkey.Value))
             ChangeTarget(1);
 
         ApplyTarget();

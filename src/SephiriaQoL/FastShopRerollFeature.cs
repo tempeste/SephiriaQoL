@@ -27,7 +27,7 @@ internal sealed class FastShopRerollFeature
 
     internal void Update()
     {
-        if (_enabled.Value != true || !_hotkey.Value.IsPressed())
+        if (_enabled.Value != true || !ShortcutInput.IsPressed(_hotkey.Value))
         {
             _nextRerollTime = 0f;
             return;

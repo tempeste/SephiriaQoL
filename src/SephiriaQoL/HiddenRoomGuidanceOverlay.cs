@@ -9,6 +9,8 @@ namespace SephiriaQoL;
 
 internal sealed class HiddenRoomGuidanceOverlay
 {
+    private const int FloorDiscoveryAttempts = 6;
+
     private static HiddenRoomGuidanceOverlay _instance;
 
     private readonly ConfigEntry<bool> _enabled;
@@ -16,6 +18,9 @@ internal sealed class HiddenRoomGuidanceOverlay
     private readonly List<Component> _entrances = new List<Component>();
     private Component _nearest;
     private float _nextRefresh;
+    private float _nextDiscoveryScan;
+    private int _discoveryAttemptsRemaining;
+    private string _observedFloorGuid;
     private GUIStyle _arrowStyle;
     private GUIStyle _markerLabelStyle;
 
@@ -32,11 +37,19 @@ internal sealed class HiddenRoomGuidanceOverlay
             return;
 
         _nextRefresh = Time.unscaledTime + 0.5f;
-        _entrances.RemoveAll(target => !IsUndiscovered(target));
         PlayerAvatar observer = GameCamera.Instance?.Observer;
+        RefreshFloor(observer);
+        if (_discoveryAttemptsRemaining > 0 && Time.unscaledTime >= _nextDiscoveryScan)
+        {
+            DiscoverExistingEntrances();
+            _discoveryAttemptsRemaining--;
+            _nextDiscoveryScan = Time.unscaledTime + 0.75f;
+        }
+
+        _entrances.RemoveAll(IsResolved);
         _nearest = observer == null
             ? null
-            : _entrances.OrderBy(target =>
+            : _entrances.Where(IsUndiscovered).OrderBy(target =>
                 Vector2.SqrMagnitude((Vector2)target.transform.position - (Vector2)observer.transform.position))
                 .FirstOrDefault();
     }
@@ -83,6 +96,46 @@ internal sealed class HiddenRoomGuidanceOverlay
     {
         if (entrance != null && !_entrances.Contains(entrance))
             _entrances.Add(entrance);
+    }
+
+    private void RefreshFloor(PlayerAvatar observer)
+    {
+        string floorGuid = observer?.currentFloorGuid ?? string.Empty;
+        if (string.Equals(floorGuid, _observedFloorGuid, StringComparison.Ordinal))
+            return;
+
+        _observedFloorGuid = floorGuid;
+        _entrances.Clear();
+        _nearest = null;
+        _discoveryAttemptsRemaining = string.IsNullOrEmpty(floorGuid) ? 0 : FloorDiscoveryAttempts;
+        _nextDiscoveryScan = Time.unscaledTime + 0.25f;
+    }
+
+    private void DiscoverExistingEntrances()
+    {
+        foreach (HiddenRoomTriggerCollider collider in UnityEngine.Object.FindObjectsByType<HiddenRoomTriggerCollider>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+            Register(collider);
+
+        foreach (BreakableProp_HiddenPortal portal in UnityEngine.Object.FindObjectsByType<BreakableProp_HiddenPortal>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (portal.PassageDir == HiddenPortalSide.Entrance)
+                Register(portal);
+        }
+    }
+
+    private static bool IsResolved(Component target)
+    {
+        if (target == null)
+            return true;
+        if (!target.gameObject.activeInHierarchy)
+            return false;
+        if (target is HiddenRoomTriggerCollider collider)
+            return collider.hp <= 0f;
+        if (target is BreakableProp_HiddenPortal portal)
+            return portal.IsBroken;
+        return true;
     }
 
     private static bool IsUndiscovered(Component target)
