@@ -7,7 +7,8 @@ $ErrorActionPreference = "Stop"
 
 $BepInExUrl = "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.5/BepInEx_win_x64_5.4.23.5.zip"
 $BepInExSha256 = "82f9878551030f54657792c0740d9d51a09500eeae1fba21106b0c441e6732c4"
-$RepoDir = Split-Path -Parent $PSScriptRoot
+$SourceArchiveUrl = "https://github.com/tempeste/SephiriaQoL/archive/refs/heads/main.zip"
+$RepoDir = if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) { "" } else { Split-Path -Parent $PSScriptRoot }
 $TempDir = Join-Path ([IO.Path]::GetTempPath()) ("sephiria-qol-" + [guid]::NewGuid().ToString("N"))
 
 function Get-VerifiedArchive {
@@ -47,6 +48,27 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
 
 New-Item -ItemType Directory -Path $TempDir | Out-Null
 try {
+    $ProjectPath = if ([string]::IsNullOrWhiteSpace($RepoDir)) {
+        ""
+    }
+    else {
+        Join-Path $RepoDir "src\SephiriaQoL\SephiriaQoL.csproj"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ProjectPath) -or -not (Test-Path $ProjectPath)) {
+        Write-Host "Downloading the current Sephiria QoL source..."
+        $SourceArchive = Join-Path $TempDir "source.zip"
+        $SourceDirectory = Join-Path $TempDir "source"
+        Invoke-WebRequest -Uri $SourceArchiveUrl -OutFile $SourceArchive -UseBasicParsing
+        Expand-Archive -LiteralPath $SourceArchive -DestinationPath $SourceDirectory -Force
+        $RepoDir = Get-ChildItem -LiteralPath $SourceDirectory -Directory |
+            Where-Object { Test-Path (Join-Path $_.FullName "src\SephiriaQoL\SephiriaQoL.csproj") } |
+            Select-Object -First 1 -ExpandProperty FullName
+        if ([string]::IsNullOrWhiteSpace($RepoDir)) {
+            throw "The downloaded source archive did not contain the Sephiria QoL project."
+        }
+    }
+
     $BepInExDll = Join-Path $GameDir "BepInEx\core\BepInEx.dll"
     if (-not (Test-Path $BepInExDll)) {
         Write-Host "Installing BepInEx 5.4.23.5..."

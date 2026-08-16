@@ -68,10 +68,11 @@ maintained independently against the game's runtime APIs and observed behavior.
 
 ## Installation
 
-Clone this repository and run the installer for the current platform. It installs
-the pinned BepInEx release when needed, builds the current source, and copies the
-single `SephiriaQoL.dll` into the game. Rerunning it after an update replaces the
-DLL while preserving the existing BepInEx configuration.
+Run the installer directly from GitHub, or clone this repository and run the same
+installer from the checkout. Both routes install the pinned BepInEx release when
+needed, build the current source, and copy the single `SephiriaQoL.dll` into the
+game. Rerunning either route after an update replaces the DLL while preserving the
+existing BepInEx configuration.
 
 BepInEx downloads are verified against the SHA-256 hash committed to this
 repository. Third-party mod binaries are not bundled or redistributed.
@@ -79,7 +80,8 @@ repository. Third-party mod binaries are not bundled or redistributed.
 Prerequisites:
 
 - A legal Steam installation of Sephiria using the Mono scripting backend
-- Git and .NET SDK 8 or newer
+- .NET SDK 8 or newer
+- Git only when using the clone workflow
 - A game version compatible with the referenced runtime API (last validated on
   Sephiria 1.0.27)
 
@@ -88,7 +90,22 @@ MelonLoader is not used or required. The spectator feature is already part of
 
 ### Windows
 
-Close Sephiria, then run in PowerShell:
+Close Sephiria, then choose either PowerShell workflow.
+
+Without cloning:
+
+```powershell
+irm https://raw.githubusercontent.com/tempeste/SephiriaQoL/main/scripts/install-windows.ps1 | iex
+```
+
+For a non-default Steam library without cloning:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/tempeste/SephiriaQoL/main/scripts/install-windows.ps1))) `
+  -GameDir "F:\SteamLibrary\steamapps\common\Sephiria"
+```
+
+From a clone:
 
 ```powershell
 git clone https://github.com/tempeste/SephiriaQoL.git
@@ -115,7 +132,22 @@ Launch Sephiria normally through Steam afterward.
 
 ### macOS
 
-Close Sephiria, then run in Terminal:
+Close Sephiria, then choose either Terminal workflow.
+
+Without cloning:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tempeste/SephiriaQoL/main/scripts/install-macos.sh | bash
+```
+
+For a non-default Steam library without cloning:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tempeste/SephiriaQoL/main/scripts/install-macos.sh | \
+  bash -s -- "/Volumes/Games/steamapps/common/Sephiria"
+```
+
+From a clone:
 
 ```bash
 git clone https://github.com/tempeste/SephiriaQoL.git

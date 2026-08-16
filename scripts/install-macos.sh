@@ -3,6 +3,7 @@ set -euo pipefail
 
 readonly bepinex_url="https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.5/BepInEx_macos_universal_5.4.23.5.zip"
 readonly bepinex_sha256="01c2ae782eb016dfd6c345a18dbd2dcafffb3d9d318449d6486689f426b4a323"
+readonly source_archive_url="https://github.com/tempeste/SephiriaQoL/archive/refs/heads/main.tar.gz"
 
 script_dir="$(cd "$(dirname "$0")" && pwd -P)"
 repo_dir="$(cd "$script_dir/.." && pwd -P)"
@@ -46,6 +47,14 @@ if ! command -v dotnet >/dev/null 2>&1; then
 fi
 
 temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/sephiria-qol.XXXXXX")"
+
+if [[ ! -f "$repo_dir/src/SephiriaQoL/SephiriaQoL.csproj" ]]; then
+  echo "Downloading the current Sephiria QoL source..."
+  curl --fail --location --progress-bar "$source_archive_url" --output "$temp_dir/source.tar.gz"
+  mkdir -p "$temp_dir/source"
+  tar -xzf "$temp_dir/source.tar.gz" -C "$temp_dir/source" --strip-components=1
+  repo_dir="$temp_dir/source"
+fi
 
 if [[ ! -f "$game_dir/BepInEx/core/BepInEx.dll" ]]; then
   echo "Installing BepInEx 5.4.23.5..."
