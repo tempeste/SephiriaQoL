@@ -78,8 +78,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   artifact-specific positional effects, neutral build-dependent effects, and the
   boundary between native tablet scoring and the QoL score postfix.
 - `Directory.Build.props`: resolves Windows/macOS game and managed-assembly paths.
-- `scripts/install-macos.sh`: validates, builds, and installs on macOS after
-  BepInEx itself is working.
+- `scripts/install-windows.ps1` and `scripts/install-macos.sh`: bootstrap a
+  user-scoped .NET 8 SDK and BepInEx when needed, then build and install the
+  plugin from either a checkout or a one-line remote invocation.
 
 ## Design constraints
 
@@ -125,6 +126,9 @@ Required environment:
 - .NET SDK 8+
 - Sephiria's Mono `Managed` assemblies
 - BepInEx 5 core assemblies
+
+The installer scripts bootstrap the SDK and BepInEx when missing. These remain
+manual prerequisites only for direct builds that do not use an installer.
 
 Windows defaults to `E:/SteamLibrary/steamapps/common/Sephiria`. Override it with
 `SEPHIRIA_GAME_DIR`; override only the assembly directory with

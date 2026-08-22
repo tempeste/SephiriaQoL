@@ -80,10 +80,14 @@ repository. Third-party mod binaries are not bundled or redistributed.
 Prerequisites:
 
 - A legal Steam installation of Sephiria using the Mono scripting backend
-- .NET SDK 8 or newer
 - Git only when using the clone workflow
 - A game version compatible with the referenced runtime API (last validated on
   Sephiria 1.0.27)
+
+The one-step Windows and macOS installers automatically install a user-scoped
+.NET 8 SDK when a suitable SDK is missing. They also install BepInEx 5 when it
+is missing. A manual .NET installation is only required when building without
+the installer scripts.
 
 MelonLoader is not used or required. The spectator feature is already part of
 `SephiriaQoL.dll`; do not install the upstream MelonLoader `Spectator.dll`.

@@ -3,6 +3,7 @@ set -euo pipefail
 
 readonly bepinex_url="https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.5/BepInEx_macos_universal_5.4.23.5.zip"
 readonly bepinex_sha256="01c2ae782eb016dfd6c345a18dbd2dcafffb3d9d318449d6486689f426b4a323"
+readonly dotnet_install_url="https://dot.net/v1/dotnet-install.sh"
 readonly source_archive_url="https://github.com/tempeste/SephiriaQoL/archive/refs/heads/main.tar.gz"
 
 script_dir="$(cd "$(dirname "$0")" && pwd -P)"
@@ -11,6 +12,7 @@ game_dir="${1:-$HOME/Library/Application Support/Steam/steamapps/common/Sephiria
 managed_dir="$game_dir/Sephiria.app/Contents/Resources/Data/Managed"
 plugin_dir="$game_dir/BepInEx/plugins"
 temp_dir=""
+dotnet_cmd=""
 
 cleanup() {
   if [[ -n "$temp_dir" && -d "$temp_dir" ]]; then
@@ -35,18 +37,53 @@ download_verified() {
   fi
 }
 
+has_dotnet_8_sdk() {
+  local candidate="$1"
+
+  [[ -x "$candidate" ]] || return 1
+  "$candidate" --list-sdks 2>/dev/null | awk -F. '$1 >= 8 { found = 1 } END { exit !found }'
+}
+
+install_dotnet_8_sdk() {
+  local path_candidate=""
+  local install_dir="$HOME/.dotnet"
+  local installed_candidate="$install_dir/dotnet"
+  local install_script="$temp_dir/dotnet-install.sh"
+
+  if command -v dotnet >/dev/null 2>&1; then
+    path_candidate="$(command -v dotnet)"
+    if has_dotnet_8_sdk "$path_candidate"; then
+      dotnet_cmd="$path_candidate"
+      return
+    fi
+  fi
+
+  if has_dotnet_8_sdk "$installed_candidate"; then
+    dotnet_cmd="$installed_candidate"
+    return
+  fi
+
+  echo "Installing the .NET 8 SDK for the current user..."
+  curl --fail --location --progress-bar "$dotnet_install_url" --output "$install_script"
+  bash "$install_script" --channel 8.0 --install-dir "$install_dir" --no-path
+  if ! has_dotnet_8_sdk "$installed_candidate"; then
+    echo "The .NET 8 SDK installation completed, but a usable SDK was not found at: $installed_candidate" >&2
+    exit 1
+  fi
+
+  export DOTNET_ROOT="$install_dir"
+  export PATH="$install_dir:$PATH"
+  dotnet_cmd="$installed_candidate"
+}
+
 if [[ ! -f "$managed_dir/Assembly-CSharp.dll" ]]; then
   echo "Sephiria was not found at: $game_dir" >&2
   echo "Pass its game directory as the first argument." >&2
   exit 1
 fi
 
-if ! command -v dotnet >/dev/null 2>&1; then
-  echo "The .NET 8 SDK is required but dotnet was not found in PATH." >&2
-  exit 1
-fi
-
 temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/sephiria-qol.XXXXXX")"
+install_dotnet_8_sdk
 
 if [[ ! -f "$repo_dir/src/SephiriaQoL/SephiriaQoL.csproj" ]]; then
   echo "Downloading the current Sephiria QoL source..."
@@ -76,7 +113,7 @@ export SEPHIRIA_GAME_DIR="$game_dir"
 export SEPHIRIA_MANAGED_DIR="$managed_dir"
 
 echo "Building Sephiria QoL..."
-dotnet build "$repo_dir/src/SephiriaQoL/SephiriaQoL.csproj" -c Release
+"$dotnet_cmd" build "$repo_dir/src/SephiriaQoL/SephiriaQoL.csproj" -c Release
 mkdir -p "$plugin_dir"
 cp "$repo_dir/src/SephiriaQoL/bin/Release/netstandard2.1/SephiriaQoL.dll" "$plugin_dir/SephiriaQoL.dll"
 
