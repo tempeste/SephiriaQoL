@@ -11,6 +11,7 @@ Independent BepInEx quality-of-life features for Sephiria, packaged in one
 | Run timer | Displays elapsed run time | On | — |
 | Combat contribution | Color-coded dealt/taken bars with click-through DPS, HP, element, area, and source details | On | Click a player bar |
 | Run summary and history | Shows the team result at game over and retains recent runs locally for comparison | On | `F8` |
+| Endless Expedition | Lets an opted-in party continue through increasingly dangerous native procedural floors after the final boss | Off | Host chooses in the victory prompt |
 | Encounter announcer | Names the first player to trigger a miniboss or boss room | On | — |
 | Fast shop reroll | Repeats Sephiria's normal Sapphire-shop reroll while held | On | `R` |
 | Hold to cast | Recasts held spell/artifact slots when ready; supports keys 1–8 and Cast Mode left-click | On | Existing game bindings |
@@ -25,15 +26,15 @@ Independent BepInEx quality-of-life features for Sephiria, packaged in one
 | Spectator camera | Follows living teammates after the local player is defeated | On | Arrow keys |
 | 2–16 player rooms | Expands the host lobby selector and connection capacity | On, max 16 | — |
 | Compact party roster | Scales Sephiria's multiplayer HUD as the room fills | On | — |
-| Party Scaling | Lets the host multiply new enemy health and normal-enemy counts | Off | — |
+| Party Scaling | Automatically reinforces enemies in 5–16 player rooms and supports manual host multipliers | Automatic for 5+ players | — |
 | Extended leveling | Extends the run XP table beyond level 30 for high-density runs | On, max 100 | — |
 | Native add-on bootstrap | Repairs local `AddOns` startup ordering when Sephiria's loader missed them | Automatic | — |
 
 Use the compact **QOL** button or press `F11` to open the Control Center. It groups
 the everyday, multiplayer, run-tool, and interface settings in one draggable panel.
-The damage chart, run summary, tablet optimizer, spectator, readiness, voting,
-leaf-transfer, hidden-room, and Control Center interfaces have independent
-`− / AUTO / +` scale controls. Click a percentage to restore automatic sizing.
+The damage chart, run summary, Endless Expedition, tablet optimizer, spectator,
+readiness, voting, leaf-transfer, hidden-room, and Control Center interfaces have
+independent `− / AUTO / +` scale controls. Click a percentage to restore automatic sizing.
 Auto mode uses normal sizing on Windows and scales up on high-resolution macOS/Retina
 render surfaces. Manual values persist in the BepInEx configuration.
 
@@ -193,7 +194,7 @@ no-clone workflows. Friends should not need to copy `libdoorstop.dylib` or edit
 ### Confirm it loaded
 
 After one launch, check `BepInEx/LogOutput.log` for
-`Loading [Sephiria QoL 0.9.7]`, followed by the current feature-catalog startup
+`Loading [Sephiria QoL 0.10.0]`, followed by the current feature-catalog startup
 message and no plugin exceptions.
 
 ## Multiplayer installation requirements
@@ -203,6 +204,7 @@ message and no plugin exceptions.
 | Control Center, UI scaling, and hotkey settings | Not required | Only the player using them | Settings and rendering stay on that machine. |
 | Run timer, damage chart/details, journal search | Not required | Only the player who wants the UI | These read synchronized game state and draw locally. |
 | End-of-run summary/history | Not required | Only the player who wants the UI | Each client stores its own recent summaries in the BepInEx config directory. |
+| Endless Expedition | Required and must enable it | Required and must enable it | Every client pauses the normal final-victory screen while the host chooses. The host generates, links, and synchronizes the temporary native floor segments. |
 | Encounter announcer | Required for announcements | Not required | The host identifies the first player who starts a miniboss or boss encounter and sends Sephiria's normal custom message to the room. |
 | Fast shop reroll | Not required | Only the player using it | This repeats Sephiria's existing local shop action, including its normal escalating Sapphire costs and checks. |
 | Hold to cast | Not required | Only the player using it | It follows that player's existing input bindings and waits for locally synchronized cooldown readiness before using Sephiria's normal cast path. |
@@ -219,10 +221,10 @@ message and no plugin exceptions.
 | Party Scaling | Required | Not required | Enemy health and spawn plans are changed only by the host and synchronized through Sephiria's normal networking. |
 | Extended leveling | Required above level 30 | Recommended | The host owns XP and level progression. Installing on clients keeps their XP bar and maximum-level text consistent above 30. |
 
-No feature requires every player in the room to install the plugin. Voting needs
-the host plus each player who wants to vote; leaf transfer needs the host plus the
-sender. For the most consistent UI in a 5–16 player room, install Sephiria QoL on
-everyone, but only the host is required for the larger capacity.
+Endless Expedition is the exception: every player needs the same QoL version and
+must enable it before the run. Voting needs the host plus each player who wants to
+vote; leaf transfer needs the host plus the sender. Only the host is required for
+larger room capacity and Party Scaling.
 
 ## Usage and configuration
 
@@ -296,17 +298,46 @@ and supports up to 50. The game already stores preset slots under indexed keys, 
 existing 1–15 data is unchanged. If the feature is disabled later, higher slots
 are hidden rather than erased and return when the limit is raised again.
 
+The `[EndlessExpedition]` section is disabled by default. When every player enables
+it before a run, the normal final-victory screen pauses and the host can either
+finish normally or continue into an expedition. Continuing uses Sephiria's native
+procedural stage generator, room events, rewards, merchants, hidden rooms, and
+miniboss prefabs. The generated segments live only in the current network session
+and floor movement does not write them to the run save.
+
+The Continue button stays disabled until every connected player reports the same
+Endless Expedition network protocol and an enabled setting. If anyone forgot to
+enable it before victory, finish the run normally and enable it for the next run.
+
+Enemy health and normal-enemy count increase per expedition stage, with a native
+battle room promoted to a miniboss milestone at the configured interval. Stage 1
+starts from the host's effective Party Scaling values, including automatic
+large-party scaling, and later stages add the configured growth to that baseline.
+The result is applied as one combined multiplier rather than applying both systems
+twice. The host can finish from the expedition status panel and settle the original
+victory. A full party defeat opens the defeat screen instead. Native room XP and
+Sapphire rewards keep their normal behavior and remain part of the final run
+settlement; the mod does not add a separate per-stage Sapphire grant.
+
 The `[MaxPlayer]` section controls the independent large-party implementation:
 `Enabled` toggles it, `MaximumPlayers` accepts 2–16, and
 `CompactMultiplayerHud` scales Sephiria's native party roster as it fills.
 
-The `[PartyScaling]` section is disabled by default. When `Enabled = true` on the
-host, `EnemyHealthMultiplier` accepts 1.0–10.0 and applies after Sephiria's own
-difficulty and multiplayer health bonuses. `EnemySpawnMultiplier` accepts 1.0–4.0
-and affects normal enemies only; minibosses, bosses, and training targets are not
-duplicated. A safety ceiling prevents the multiplier from pushing a generated
-phase above 96 normal enemies. Changes affect newly generated encounters and newly
-spawned enemies, so set the values before entering the next room.
+The `[PartyScaling]` section automatically compensates for Sephiria's limited
+enemy-count growth in rooms with five or more connected players. With
+`AutoScaleLargeParties = true` (the default), every player above four adds 5% to
+the QoL health multiplier and 15% to the normal-enemy multiplier. This produces
+1.05× health / 1.15× count at five players and 1.60× health / 2.80× count at
+sixteen players, after Sephiria applies its own multiplayer scaling.
+
+Set `Enabled = true` to use `EnemyHealthMultiplier` (1.0–10.0) and
+`EnemySpawnMultiplier` (1.0–4.0) as manual minimums. When both automatic and
+manual scaling are active, the larger value wins instead of multiplying them
+together. Disable `AutoScaleLargeParties` if the host wants entirely manual
+control. Count scaling affects normal enemies only; minibosses, bosses, and
+training targets are not duplicated. A safety ceiling prevents the multiplier
+from pushing a generated phase above 96 normal enemies. Changes affect newly
+generated encounters and newly spawned enemies.
 
 Other players do not need the plugin for Party Scaling. They receive the host's
 spawned enemies and synchronized health values through the game's normal network
@@ -373,9 +404,13 @@ Copy the resulting `SephiriaQoL.dll` into `BepInEx/plugins`. The clean-room
   edit `DamagePanelScale` / `PanelScale` in the QoL config. `0` restores auto mode.
 - A host still offers only four slots: confirm `MaxPlayer.Enabled = true` and
   `MaxPlayer.MaximumPlayers = 16` in the QoL config, then recreate the lobby.
-- Party Scaling appears inactive: confirm this machine is the host, enable
-  `PartyScaling.Enabled`, and enter a new encounter. Existing enemies are not
+- Party Scaling appears inactive: confirm this machine is the host and enter a new
+  encounter. Automatic scaling requires at least five connected players; manual
+  values require `PartyScaling.Enabled = true`. Existing enemies are not
   retroactively changed.
+- Endless Expedition is not offered: use the same QoL version on every machine,
+  enable `EndlessExpedition.Enabled` before the run, and reach the final victory.
+  Do not enable it on only part of a multiplayer party.
 - Leveling stops at 30: confirm `ExtendedLeveling.Enabled = true` on the host and
   set `ExtendedLeveling.MaximumLevel` above 30 before earning the next threshold.
 - Build references are missing: set `SEPHIRIA_GAME_DIR`, or set

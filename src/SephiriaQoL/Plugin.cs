@@ -9,7 +9,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "dev.tempeste.sephiria.qol";
     public const string PluginName = "Sephiria QoL";
-    public const string PluginVersion = "0.9.7";
+    public const string PluginVersion = "0.10.0";
 
     private Harmony _harmony;
     private UtilityOverlay _utility;
@@ -21,6 +21,7 @@ public sealed class Plugin : BaseUnityPlugin
     private LeafTransferOverlay _leafTransfer;
     private TabletOptimizerOverlay _tabletOptimizer;
     private SpectatorFeature _spectator;
+    private EndlessExpeditionFeature _endlessExpedition;
     private QoLControlCenter _controlCenter;
     private bool _nativeAddOnsChecked;
 
@@ -122,7 +123,9 @@ public sealed class Plugin : BaseUnityPlugin
         ConfigEntry<bool> compactMultiplayerHud = Config.Bind("MaxPlayer", "CompactMultiplayerHud", true,
             "Scales down Sephiria's multiplayer roster as more players join.");
         ConfigEntry<bool> partyScalingEnabled = Config.Bind("PartyScaling", "Enabled", false,
-            "Allows this host to scale newly spawned enemy health and normal-enemy counts.");
+            "Allows this host to set manual minimum multipliers for newly spawned enemy health and normal-enemy counts.");
+        ConfigEntry<bool> autoScaleLargeParties = Config.Bind("PartyScaling", "AutoScaleLargeParties", true,
+            "Automatically adds enemy health and normal-enemy count scaling when five or more players are connected.");
         ConfigEntry<float> enemyHealthMultiplier = Config.Bind("PartyScaling", "EnemyHealthMultiplier", 1f,
             new ConfigDescription("Host-side enemy health multiplier from 1.0 to 10.0.",
                 new AcceptableValueRange<float>(1f, 10f)));
@@ -136,6 +139,19 @@ public sealed class Plugin : BaseUnityPlugin
             new ConfigDescription("Maximum run level from 30 to 200.",
                 new AcceptableValueRange<int>(ExtendedLevelingFeature.VanillaMaximumLevel,
                     ExtendedLevelingFeature.MaximumSupportedLevel)));
+        ConfigEntry<bool> endlessExpeditionEnabled = Config.Bind("EndlessExpedition", "Enabled", false,
+            "Offers a host-controlled endless procedural expedition after the final boss. Every player must enable it.");
+        ConfigEntry<float> endlessHealthGrowth = Config.Bind("EndlessExpedition", "HealthGrowthPerStage", 0.15f,
+            new ConfigDescription("Additional enemy health multiplier per endless stage from 0.05 to 0.50.",
+                new AcceptableValueRange<float>(0.05f, 0.5f)));
+        ConfigEntry<float> endlessSpawnGrowth = Config.Bind("EndlessExpedition", "SpawnGrowthPerStage", 0.05f,
+            new ConfigDescription("Additional normal-enemy count multiplier per endless stage from 0.00 to 0.25.",
+                new AcceptableValueRange<float>(0f, 0.25f)));
+        ConfigEntry<int> endlessMinibossInterval = Config.Bind("EndlessExpedition", "MinibossInterval", 5,
+            new ConfigDescription("Number of endless stages between miniboss milestones from 2 to 10.",
+                new AcceptableValueRange<int>(2, 10)));
+        ConfigEntry<float> endlessPanelScale = Config.Bind("EndlessExpedition", "PanelScale", 0f,
+            "Endless Expedition panel scale from 0.75 to 2.0. Use 0 for automatic sizing.");
         ConfigEntry<bool> showControlCenter = Config.Bind("Interface", "ShowControlCenter", false,
             "Shows the QoL Control Center. The compact QOL button remains available while hidden.");
         ConfigEntry<KeyboardShortcut> controlCenterHotkey = Config.Bind("Interface", "ToggleControlCenterHotkey",
@@ -164,9 +180,14 @@ public sealed class Plugin : BaseUnityPlugin
             preferConditionalSynergies, tabletOptimizerScale, Logger);
         _spectator = new SpectatorFeature(
             spectatorEnabled, spectatorPreviousHotkey, spectatorNextHotkey, spectatorPanelScale);
+        _endlessExpedition = new EndlessExpeditionFeature(
+            endlessExpeditionEnabled, endlessHealthGrowth, endlessSpawnGrowth,
+            endlessMinibossInterval, endlessPanelScale, Logger);
         ConditionalSynergyScoring.Configure(preferConditionalSynergies);
         MaxPlayerFeature.Configure(maxPlayerEnabled, maxPlayers, compactMultiplayerHud, Logger);
-        PartyScalingFeature.Configure(partyScalingEnabled, enemyHealthMultiplier, enemySpawnMultiplier, Logger);
+        PartyScalingFeature.Configure(
+            partyScalingEnabled, autoScaleLargeParties,
+            enemyHealthMultiplier, enemySpawnMultiplier, Logger);
         ExtendedLevelingFeature.Configure(extendedLevelingEnabled, maximumLevel, Logger);
         BossEntryAnnouncer.Configure(bossAnnouncerEnabled, Logger);
         AdditionalPresetSlotsFeature.Configure(additionalPresetSlotsEnabled, presetSlotLimit);
@@ -177,8 +198,11 @@ public sealed class Plugin : BaseUnityPlugin
             showTabletOptimizer, tabletOptimizerHotkey, allowTabletRotation, preferConditionalSynergies, tabletOptimizerScale,
             spectatorEnabled, spectatorPreviousHotkey, spectatorNextHotkey, spectatorPanelScale,
             maxPlayerEnabled, maxPlayers, compactMultiplayerHud,
-            partyScalingEnabled, enemyHealthMultiplier, enemySpawnMultiplier,
-            extendedLevelingEnabled, maximumLevel, runSummaryEnabled, runSummaryScale, runSummaryHistoryHotkey,
+            partyScalingEnabled, autoScaleLargeParties, enemyHealthMultiplier, enemySpawnMultiplier,
+            extendedLevelingEnabled, maximumLevel,
+            endlessExpeditionEnabled, endlessHealthGrowth, endlessSpawnGrowth,
+            endlessMinibossInterval, endlessPanelScale,
+            runSummaryEnabled, runSummaryScale, runSummaryHistoryHotkey,
             bossAnnouncerEnabled, fastShopRerollEnabled, fastShopRerollInterval, fastShopRerollHotkey,
             holdToCastEnabled,
             partyReadinessEnabled, partyReadinessHotkey, partyReadinessScale,
@@ -203,6 +227,7 @@ public sealed class Plugin : BaseUnityPlugin
         _leafTransfer?.Update();
         _tabletOptimizer?.Update();
         _spectator?.Update();
+        _endlessExpedition?.Update();
         _controlCenter?.Update();
         HoldToCastFeature.Update();
         ExtendedLevelingFeature.Refresh();
@@ -225,6 +250,7 @@ public sealed class Plugin : BaseUnityPlugin
         JournalSearch.OnGUI();
         _tabletOptimizer?.OnGUI();
         _spectator?.OnGUI();
+        _endlessExpedition?.OnGUI();
         _controlCenter?.OnGUI();
     }
 
@@ -233,6 +259,7 @@ public sealed class Plugin : BaseUnityPlugin
         ExtendedLevelingFeature.Restore();
         _harmony?.UnpatchSelf();
         _spectator?.Dispose();
+        _endlessExpedition?.Dispose();
         _runSummary?.Dispose();
         _hiddenRoomGuidance?.Dispose();
         _partyVote?.Dispose();
@@ -245,6 +272,7 @@ public sealed class Plugin : BaseUnityPlugin
         _leafTransfer = null;
         _tabletOptimizer = null;
         _spectator = null;
+        _endlessExpedition = null;
         _controlCenter = null;
     }
 }

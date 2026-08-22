@@ -13,6 +13,9 @@ namespace SephiriaQoL;
 
 internal static class PartyScalingFeature
 {
+    private const int AutomaticScalingMinimumPlayers = 5;
+    private const float AutomaticHealthGrowthPerPlayer = 0.05f;
+    private const float AutomaticSpawnGrowthPerPlayer = 0.15f;
     private const int MaximumNormalEnemiesPerPhase = 96;
 
     private sealed class ScaledMarker
@@ -24,6 +27,7 @@ internal static class PartyScalingFeature
     private static readonly Dictionary<Type, FieldInfo> SpawnedFields = new();
 
     private static ConfigEntry<bool> _enabled;
+    private static ConfigEntry<bool> _autoScaleLargeParties;
     private static ConfigEntry<float> _healthMultiplier;
     private static ConfigEntry<float> _spawnMultiplier;
     private static ManualLogSource _logger;
@@ -32,11 +36,13 @@ internal static class PartyScalingFeature
 
     internal static void Configure(
         ConfigEntry<bool> enabled,
+        ConfigEntry<bool> autoScaleLargeParties,
         ConfigEntry<float> healthMultiplier,
         ConfigEntry<float> spawnMultiplier,
         ManualLogSource logger)
     {
         _enabled = enabled;
+        _autoScaleLargeParties = autoScaleLargeParties;
         _healthMultiplier = healthMultiplier;
         _spawnMultiplier = spawnMultiplier;
         _logger = logger;
@@ -45,14 +51,61 @@ internal static class PartyScalingFeature
         _spawnMultiplier.Value = Mathf.Clamp(_spawnMultiplier.Value, 1f, 4f);
     }
 
-    private static bool ShouldScale => _enabled?.Value == true && NetworkServer.active;
+    internal static float BaselineSpawnMultiplier
+    {
+        get
+        {
+            float configured = _enabled?.Value == true
+                ? Mathf.Clamp(_spawnMultiplier.Value, 1f, 4f)
+                : 1f;
+            return Mathf.Max(configured, CalculateAutomaticSpawnMultiplier());
+        }
+    }
+
+    internal static float BaselineHealthMultiplier
+    {
+        get
+        {
+            float configured = _enabled?.Value == true
+                ? Mathf.Clamp(_healthMultiplier.Value, 1f, 10f)
+                : 1f;
+            return Mathf.Max(configured, CalculateAutomaticHealthMultiplier());
+        }
+    }
+
+    private static bool ShouldScale => NetworkServer.active &&
+        (EndlessExpeditionFeature.IsHostActive || BaselineHealthMultiplier > 1.001f ||
+         BaselineSpawnMultiplier > 1.001f);
+
+    private static int ConnectedPlayerCount => NetworkServer.connections.Values.Count(connection =>
+        connection?.identity != null && connection.identity.GetComponent<PlayerAvatar>() != null);
+
+    private static float CalculateAutomaticHealthMultiplier()
+    {
+        if (_autoScaleLargeParties?.Value != true)
+            return 1f;
+
+        int extraPlayers = Mathf.Max(0, ConnectedPlayerCount - (AutomaticScalingMinimumPlayers - 1));
+        return Mathf.Clamp(1f + extraPlayers * AutomaticHealthGrowthPerPlayer, 1f, 2f);
+    }
+
+    private static float CalculateAutomaticSpawnMultiplier()
+    {
+        if (_autoScaleLargeParties?.Value != true)
+            return 1f;
+
+        int extraPlayers = Mathf.Max(0, ConnectedPlayerCount - (AutomaticScalingMinimumPlayers - 1));
+        return Mathf.Clamp(1f + extraPlayers * AutomaticSpawnGrowthPerPlayer, 1f, 4f);
+    }
 
     private static void ScaleSpawnPlan(MonsterSpawnPhase phase)
     {
         if (!ShouldScale || phase?.spawnDatas == null)
             return;
 
-        float multiplier = Mathf.Clamp(_spawnMultiplier.Value, 1f, 4f);
+        float multiplier = EndlessExpeditionFeature.IsHostActive
+            ? EndlessExpeditionFeature.CurrentSpawnMultiplier
+            : BaselineSpawnMultiplier;
         if (multiplier <= 1.001f)
             return;
 
@@ -119,7 +172,9 @@ internal static class PartyScalingFeature
             return;
 
         ScaledEnemies.Add(enemy, new ScaledMarker());
-        float multiplier = Mathf.Clamp(_healthMultiplier.Value, 1f, 10f);
+        float multiplier = EndlessExpeditionFeature.IsHostActive
+            ? EndlessExpeditionFeature.CurrentHealthMultiplier
+            : BaselineHealthMultiplier;
         if (multiplier <= 1.001f)
             return;
 

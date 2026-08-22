@@ -35,10 +35,16 @@ internal sealed partial class QoLControlCenter
     private readonly ConfigEntry<int> _maxPlayers;
     private readonly ConfigEntry<bool> _compactMultiplayerHud;
     private readonly ConfigEntry<bool> _partyScalingEnabled;
+    private readonly ConfigEntry<bool> _autoScaleLargeParties;
     private readonly ConfigEntry<float> _enemyHealthMultiplier;
     private readonly ConfigEntry<float> _enemySpawnMultiplier;
     private readonly ConfigEntry<bool> _extendedLevelingEnabled;
     private readonly ConfigEntry<int> _maximumLevel;
+    private readonly ConfigEntry<bool> _endlessExpeditionEnabled;
+    private readonly ConfigEntry<float> _endlessHealthGrowth;
+    private readonly ConfigEntry<float> _endlessSpawnGrowth;
+    private readonly ConfigEntry<int> _endlessMinibossInterval;
+    private readonly ConfigEntry<float> _endlessScale;
     private readonly ConfigEntry<bool> _runSummaryEnabled;
     private readonly ConfigEntry<float> _runSummaryScale;
     private readonly ConfigEntry<KeyboardShortcut> _runSummaryHistoryHotkey;
@@ -62,6 +68,7 @@ internal sealed partial class QoLControlCenter
     private readonly ConfigEntry<int> _presetSlotLimit;
 
     private Rect _windowRect = new Rect(90f, 76f, 520f, 650f);
+    private Vector2 _multiplayerScroll;
     private Vector2 _runToolsScroll;
     private Vector2 _interfaceScroll;
     private ConfigEntry<KeyboardShortcut> _capturingHotkey;
@@ -90,10 +97,16 @@ internal sealed partial class QoLControlCenter
         ConfigEntry<int> maxPlayers,
         ConfigEntry<bool> compactMultiplayerHud,
         ConfigEntry<bool> partyScalingEnabled,
+        ConfigEntry<bool> autoScaleLargeParties,
         ConfigEntry<float> enemyHealthMultiplier,
         ConfigEntry<float> enemySpawnMultiplier,
         ConfigEntry<bool> extendedLevelingEnabled,
         ConfigEntry<int> maximumLevel,
+        ConfigEntry<bool> endlessExpeditionEnabled,
+        ConfigEntry<float> endlessHealthGrowth,
+        ConfigEntry<float> endlessSpawnGrowth,
+        ConfigEntry<int> endlessMinibossInterval,
+        ConfigEntry<float> endlessScale,
         ConfigEntry<bool> runSummaryEnabled,
         ConfigEntry<float> runSummaryScale,
         ConfigEntry<KeyboardShortcut> runSummaryHistoryHotkey,
@@ -138,10 +151,16 @@ internal sealed partial class QoLControlCenter
         _maxPlayers = maxPlayers;
         _compactMultiplayerHud = compactMultiplayerHud;
         _partyScalingEnabled = partyScalingEnabled;
+        _autoScaleLargeParties = autoScaleLargeParties;
         _enemyHealthMultiplier = enemyHealthMultiplier;
         _enemySpawnMultiplier = enemySpawnMultiplier;
         _extendedLevelingEnabled = extendedLevelingEnabled;
         _maximumLevel = maximumLevel;
+        _endlessExpeditionEnabled = endlessExpeditionEnabled;
+        _endlessHealthGrowth = endlessHealthGrowth;
+        _endlessSpawnGrowth = endlessSpawnGrowth;
+        _endlessMinibossInterval = endlessMinibossInterval;
+        _endlessScale = endlessScale;
         _runSummaryEnabled = runSummaryEnabled;
         _runSummaryScale = runSummaryScale;
         _runSummaryHistoryHotkey = runSummaryHistoryHotkey;
@@ -266,17 +285,19 @@ internal sealed partial class QoLControlCenter
 
     private void DrawMultiplayerPage()
     {
+        _multiplayerScroll = GUI.BeginScrollView(
+            new Rect(0f, 94f, 520f, 536f), _multiplayerScroll, new Rect(0f, 0f, 504f, 630f));
         bool hostActive = PartyScalingFeature.IsHostActive;
         Color statusColor = hostActive ? OverlayGui.Success : OverlayGui.Accent;
-        OverlayGui.DrawPanel(new Rect(16f, 96f, 488f, 48f));
-        OverlayGui.DrawPip(new Rect(28f, 112f, 10f, 10f), statusColor);
-        GUI.Label(new Rect(44f, 101f, 446f, 20f),
+        OverlayGui.DrawPanel(new Rect(16f, 2f, 488f, 48f));
+        OverlayGui.DrawPip(new Rect(28f, 18f, 10f, 10f), statusColor);
+        GUI.Label(new Rect(44f, 7f, 446f, 20f),
             hostActive ? "Host authority active" : "Host settings ready", OverlayGui.TitleStyle);
-        GUI.Label(new Rect(44f, 121f, 446f, 18f),
+        GUI.Label(new Rect(44f, 27f, 446f, 18f),
             hostActive ? "Server-side settings apply to newly spawned encounters." : "Settings take effect when this machine hosts a run.",
             OverlayGui.MutedStyle);
 
-        float y = 154f;
+        float y = 60f;
         y = DrawToggle(y, "Spectator camera", "Follow living teammates after you are defeated.", _spectatorEnabled);
         y = DrawToggle(y, "Large-party rooms", "Allow this host to create rooms above four players.", _maxPlayerEnabled);
 
@@ -290,7 +311,8 @@ internal sealed partial class QoLControlCenter
 
         GUI.Label(new Rect(16f, y + 5f, 488f, 24f), "Party Scaling", OverlayGui.TitleStyle);
         y += 34f;
-        y = DrawToggle(y, "Enable Party Scaling", "Host-only challenge tuning; disabled by default.", _partyScalingEnabled);
+        y = DrawToggle(y, "Automatic 5+ player scaling", "+5% HP and +15% normal enemies per player above four.", _autoScaleLargeParties);
+        y = DrawToggle(y, "Manual Party Scaling", "Use the configured values as host-side minimum multipliers.", _partyScalingEnabled);
         DrawMultiplier(y + 2f, "Enemy health", _enemyHealthMultiplier, 0.25f, 1f, 10f);
         y += 40f;
         DrawMultiplier(y + 2f, "Normal enemy count", _enemySpawnMultiplier, 0.25f, 1f, 4f);
@@ -305,14 +327,15 @@ internal sealed partial class QoLControlCenter
             _maximumLevel.Value = Mathf.Min(
                 ExtendedLevelingFeature.MaximumSupportedLevel, _maximumLevel.Value + 10);
 
-        GUI.Label(new Rect(16f, 615f, 488f, 22f),
+        GUI.Label(new Rect(16f, 600f, 488f, 22f),
             "Count scaling excludes minibosses, bosses, and training targets.", OverlayGui.MutedStyle);
+        GUI.EndScrollView();
     }
 
     private void DrawInterfacePage()
     {
         _interfaceScroll = GUI.BeginScrollView(
-            new Rect(0f, 94f, 520f, 536f), _interfaceScroll, new Rect(0f, 0f, 504f, 1240f));
+            new Rect(0f, 94f, 520f, 536f), _interfaceScroll, new Rect(0f, 0f, 504f, 1304f));
         GUI.Label(new Rect(16f, 0f, 488f, 24f), "Panel sizing", OverlayGui.TitleStyle);
         GUI.Label(new Rect(16f, 25f, 488f, 38f),
             "Each overlay keeps its own scale. Auto detects high-resolution macOS displays; manual values work on every platform.",
@@ -322,22 +345,23 @@ internal sealed partial class QoLControlCenter
         DrawScaleRow(144f, "Tablet optimizer", _tabletScale);
         DrawScaleRow(208f, "Spectator panel", _spectatorScale);
         DrawScaleRow(272f, "Run summary", _runSummaryScale);
-        DrawScaleRow(336f, "Party readiness", _partyReadinessScale);
-        DrawScaleRow(400f, "Hidden-room marker", _hiddenRoomGuidanceScale);
-        DrawScaleRow(464f, "Party voting", _partyVotingScale);
-        DrawScaleRow(528f, "Leaf transfer", _leafTransferScale);
-        DrawScaleRow(592f, "Control center", _panelScale);
+        DrawScaleRow(336f, "Endless Expedition", _endlessScale);
+        DrawScaleRow(400f, "Party readiness", _partyReadinessScale);
+        DrawScaleRow(464f, "Hidden-room marker", _hiddenRoomGuidanceScale);
+        DrawScaleRow(528f, "Party voting", _partyVotingScale);
+        DrawScaleRow(592f, "Leaf transfer", _leafTransferScale);
+        DrawScaleRow(656f, "Control center", _panelScale);
 
-        OverlayGui.DrawPanel(new Rect(16f, 656f, 488f, 44f));
-        GUI.Label(new Rect(30f, 662f, 460f, 18f), "Sizing is saved immediately", OverlayGui.LabelStyle);
-        GUI.Label(new Rect(30f, 681f, 460f, 16f),
+        OverlayGui.DrawPanel(new Rect(16f, 720f, 488f, 44f));
+        GUI.Label(new Rect(30f, 726f, 460f, 18f), "Sizing is saved immediately", OverlayGui.LabelStyle);
+        GUI.Label(new Rect(30f, 745f, 460f, 16f),
             "Click the percentage to return that panel to automatic sizing.", OverlayGui.MutedStyle);
 
-        GUI.Label(new Rect(16f, 716f, 488f, 24f), "Hotkeys", OverlayGui.TitleStyle);
-        GUI.Label(new Rect(16f, 741f, 488f, 36f),
+        GUI.Label(new Rect(16f, 780f, 488f, 24f), "Hotkeys", OverlayGui.TitleStyle);
+        GUI.Label(new Rect(16f, 805f, 488f, 36f),
             "Click a binding, then press a key or modifier combination. Escape cancels; × unbinds it.",
             OverlayGui.MutedStyle);
-        float hotkeyY = 784f;
+        float hotkeyY = 848f;
         hotkeyY = DrawHotkeyRow(hotkeyY, "Control Center", _hotkey);
         hotkeyY = DrawHotkeyRow(hotkeyY, "Run summary history", _runSummaryHistoryHotkey);
         hotkeyY = DrawHotkeyRow(hotkeyY, "Fast shop reroll", _fastShopRerollHotkey);
@@ -353,7 +377,7 @@ internal sealed partial class QoLControlCenter
     private void DrawRunToolsPage()
     {
         _runToolsScroll = GUI.BeginScrollView(
-            new Rect(0f, 94f, 520f, 536f), _runToolsScroll, new Rect(0f, 0f, 504f, 750f));
+            new Rect(0f, 94f, 520f, 536f), _runToolsScroll, new Rect(0f, 0f, 504f, 940f));
         GUI.Label(new Rect(16f, 0f, 488f, 24f), "Run tools", OverlayGui.TitleStyle);
         GUI.Label(new Rect(16f, 25f, 488f, 38f),
             "Local conveniences stay local. Shared announcements are sent only by the host.",
@@ -361,6 +385,7 @@ internal sealed partial class QoLControlCenter
 
         float y = 70f;
         y = DrawToggle(y, "Run summary and history", "Show at game over; F8 reopens recent local runs.", _runSummaryEnabled);
+        y = DrawToggle(y, "Endless Expedition", "All players opt in; the host chooses after the final boss.", _endlessExpeditionEnabled);
         y = DrawToggle(y, "Encounter announcer", "Host announces miniboss and boss triggers.", _bossAnnouncerEnabled);
         y = DrawToggle(y, "Fast shop reroll", $"Hold {FormatShortcut(_fastShopRerollHotkey.Value)} in a shop to repeat rerolls.", _fastShopRerollEnabled);
         y = DrawToggle(y, "Hold to cast", "Hold spell keys 1–8 or Cast Mode left-click through cooldowns.", _holdToCastEnabled);
@@ -369,6 +394,18 @@ internal sealed partial class QoLControlCenter
         y = DrawToggle(y, "Party voting", $"Press {FormatShortcut(_partyVotingHotkey.Value)}; the host sees manual tallies.", _partyVotingEnabled);
         y = DrawToggle(y, "Leaf transfer", $"Press {FormatShortcut(_leafTransferHotkey.Value)}; disabled by default.", _leafTransferEnabled);
         y = DrawToggle(y, "Additional preset slots", "Use Sephiria's native indexed preset storage.", _additionalPresetSlotsEnabled);
+
+        OverlayGui.DrawPanel(new Rect(16f, y, 488f, 112f));
+        DrawStepperLabel(y + 9f, "Enemy HP growth per stage", $"+{_endlessHealthGrowth.Value:P0}");
+        DrawFloatStepper(y + 9f, _endlessHealthGrowth, 0.05f, 0.05f, 0.5f);
+        DrawStepperLabel(y + 43f, "Normal-enemy growth per stage", $"+{_endlessSpawnGrowth.Value:P0}");
+        DrawFloatStepper(y + 43f, _endlessSpawnGrowth, 0.05f, 0f, 0.25f);
+        DrawStepperLabel(y + 77f, "Stages per miniboss milestone", _endlessMinibossInterval.Value.ToString());
+        if (GUI.Button(new Rect(400f, y + 77f, 28f, 24f), "−", OverlayGui.ButtonStyle))
+            _endlessMinibossInterval.Value = Mathf.Max(2, _endlessMinibossInterval.Value - 1);
+        if (GUI.Button(new Rect(462f, y + 77f, 28f, 24f), "+", OverlayGui.ButtonStyle))
+            _endlessMinibossInterval.Value = Mathf.Min(10, _endlessMinibossInterval.Value + 1);
+        y += 122f;
 
         OverlayGui.DrawPanel(new Rect(16f, y, 488f, 52f));
         DrawStepperLabel(y + 14f, "Maximum preset slots", _presetSlotLimit.Value.ToString());
@@ -425,6 +462,19 @@ internal sealed partial class QoLControlCenter
         float maximum)
     {
         DrawStepperLabel(y, title, $"{entry.Value:0.00}×");
+        if (GUI.Button(new Rect(400f, y, 28f, 24f), "−", OverlayGui.ButtonStyle))
+            entry.Value = Mathf.Round(Mathf.Clamp(entry.Value - step, minimum, maximum) * 100f) / 100f;
+        if (GUI.Button(new Rect(462f, y, 28f, 24f), "+", OverlayGui.ButtonStyle))
+            entry.Value = Mathf.Round(Mathf.Clamp(entry.Value + step, minimum, maximum) * 100f) / 100f;
+    }
+
+    private static void DrawFloatStepper(
+        float y,
+        ConfigEntry<float> entry,
+        float step,
+        float minimum,
+        float maximum)
+    {
         if (GUI.Button(new Rect(400f, y, 28f, 24f), "−", OverlayGui.ButtonStyle))
             entry.Value = Mathf.Round(Mathf.Clamp(entry.Value - step, minimum, maximum) * 100f) / 100f;
         if (GUI.Button(new Rect(462f, y, 28f, 24f), "+", OverlayGui.ButtonStyle))

@@ -32,6 +32,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   including live dealt and damage-taken run totals.
 - `RunSummaryOverlay.cs` and `RunSummaryHistoryStore.cs`: capture the combat
   tracker at game over, persist recent local summaries, and compare player output.
+- `EndlessExpeditionFeature.cs`: opt-in post-victory continuation that uses
+  Sephiria's native procedural stage generator, keeps temporary floors in memory,
+  and lets the host end the expedition for every participating client.
 - `BossEntryAnnouncer.cs`: host-only miniboss/boss-start message identifying the
   player who triggered the encounter through Sephiria's normal custom messages.
 - `FastShopRerollFeature.cs`: rate-limited held hotkey around Sephiria's existing
@@ -66,8 +69,9 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   `AddOns` when startup ordering caused it to miss them.
 - `PartyScalingFeature.cs`: host-only scaling of generated normal-enemy counts and
   regular, random-phase, and boss enemy health after Sephiria applies its own
-  difficulty and multiplayer bonuses. Minibosses, bosses, and training targets
-  are never duplicated.
+  difficulty and multiplayer bonuses. Five-player-and-larger parties receive an
+  automatic baseline by default; manual values act as minimums. Minibosses,
+  bosses, and training targets are never duplicated.
 - `ExtendedLevelingFeature.cs`: expands Sephiria's cumulative run-XP table for
   high-density Party Scaling runs while preserving every standard threshold and
   the game's server-authoritative level-up path.
@@ -110,9 +114,14 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   path and its generated client command before Sephiria changes synchronized money.
 - Additional presets must extend `UI_PresetPanel.GetSlotLimitCount`; do not replace
   or rewrite profile serialization.
-- Party Scaling must remain host-authoritative, disabled by default, and applied
-  only to newly generated/spawned enemies. Preserve the normal-enemy phase cap and
-  do not duplicate minibosses, bosses, or training targets.
+- Party Scaling must remain host-authoritative and applied only to newly
+  generated/spawned enemies. Automatic scaling begins at five players by default;
+  manual values remain opt-in minimums. Preserve the normal-enemy phase cap and do
+  not duplicate minibosses, bosses, or training targets.
+- Endless Expedition must remain disabled by default and require the same enabled
+  QoL version on every player. The host owns generation and progress; reuse native
+  floors, events, rewards, and miniboss prefabs, move without saving, and replace
+  rather than stack Party Scaling multipliers while the expedition is active.
 - Extended leveling must preserve Sephiria's standard XP thresholds and normal
   `AddExp`, `LocalAddExp`, reward, healing, and synchronization paths. Do not
   replace progression methods or write to save/profile data.
