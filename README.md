@@ -74,8 +74,9 @@ needed, build the current source, and copy the single `SephiriaQoL.dll` into the
 game. Rerunning either route after an update replaces the DLL while preserving the
 existing BepInEx configuration.
 
-BepInEx downloads are verified against the SHA-256 hash committed to this
-repository. Third-party mod binaries are not bundled or redistributed.
+BepInEx and the temporary macOS compatibility download are verified against
+SHA-256 hashes committed to this repository. Third-party mod binaries are not
+bundled or redistributed.
 
 Prerequisites:
 
@@ -175,8 +176,19 @@ The script prints the exact Steam launch option to paste into
 ```
 
 Then launch Sephiria through Steam. The official BepInEx 5.4.23.5 macOS package
-is universal; its launcher handles the appropriate game architecture on Intel and
-Apple Silicon.
+is installed first. Because Sephiria 1.0.30 moved to Unity 6000.3, the installer
+also installs a checksum-pinned macOS compatibility build from
+[UnityDoorstop PR #110](https://github.com/NeighTools/UnityDoorstop/pull/110).
+On Apple Silicon it installs Rosetta 2 when needed and configures Sephiria to run
+through the x86_64 path that is currently known to load BepInEx reliably. Existing
+loaders that have already started BepInEx successfully for the current game build
+are preserved. This is a pinned upstream CI build and can be removed once an
+official UnityDoorstop release contains the Unity 6000.3 fix.
+
+The compatibility loader and Rosetta setup are automatic for both the cloned and
+no-clone workflows. Friends should not need to copy `libdoorstop.dylib` or edit
+`run_bepinex.sh` manually. The installer keeps the original official loader as
+`libdoorstop.dylib.bepinex-5.4.23.5` before replacing it.
 
 ### Confirm it loaded
 
@@ -350,8 +362,9 @@ Copy the resulting `SephiriaQoL.dll` into `BepInEx/plugins`. The clean-room
 
 ## Troubleshooting
 
-- No `BepInEx/LogOutput.log`: BepInEx itself did not initialize; fix the loader
-  before debugging this plugin.
+- No `BepInEx/LogOutput.log` on macOS: close Sephiria and rerun the current macOS
+  installer. It reapplies the checksum-pinned compatibility loader and Rosetta
+  launcher setup before rebuilding the plugin.
 - Plugin is absent from the log: confirm the DLL is directly under
   `BepInEx/plugins` and that only the BepInEx build is installed.
 - Overlays are missing during a cinematic: full-screen game UI can cover IMGUI;
