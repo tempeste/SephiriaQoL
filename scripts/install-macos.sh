@@ -41,7 +41,7 @@ has_dotnet_8_sdk() {
   local candidate="$1"
 
   [[ -x "$candidate" ]] || return 1
-  "$candidate" --list-sdks 2>/dev/null | awk -F. '$1 >= 8 { found = 1 } END { exit !found }'
+  "$candidate" --list-sdks 2>/dev/null | awk -F. '$1 == 8 { found = 1 } END { exit !found }'
 }
 
 install_dotnet_8_sdk() {
@@ -59,6 +59,8 @@ install_dotnet_8_sdk() {
   fi
 
   if has_dotnet_8_sdk "$installed_candidate"; then
+    export DOTNET_ROOT="$install_dir"
+    export PATH="$install_dir:$PATH"
     dotnet_cmd="$installed_candidate"
     return
   fi
@@ -113,7 +115,10 @@ export SEPHIRIA_GAME_DIR="$game_dir"
 export SEPHIRIA_MANAGED_DIR="$managed_dir"
 
 echo "Building Sephiria QoL..."
-"$dotnet_cmd" build "$repo_dir/src/SephiriaQoL/SephiriaQoL.csproj" -c Release
+(
+  cd "$repo_dir"
+  "$dotnet_cmd" build "src/SephiriaQoL/SephiriaQoL.csproj" -c Release
+)
 mkdir -p "$plugin_dir"
 cp "$repo_dir/src/SephiriaQoL/bin/Release/netstandard2.1/SephiriaQoL.dll" "$plugin_dir/SephiriaQoL.dll"
 

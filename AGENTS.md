@@ -78,6 +78,8 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
   artifact-specific positional effects, neutral build-dependent effects, and the
   boundary between native tablet scoring and the QoL score postfix.
 - `Directory.Build.props`: resolves Windows/macOS game and managed-assembly paths.
+- `global.json`: pins builds to the .NET 8 SDK family so later SDKs cannot select
+  an incompatible .NET Standard reference-pack source.
 - `scripts/install-windows.ps1` and `scripts/install-macos.sh`: bootstrap a
   user-scoped .NET 8 SDK and BepInEx when needed, then build and install the
   plugin from either a checkout or a one-line remote invocation.
@@ -123,7 +125,7 @@ and build metadata. Before every push, inspect `git status`, `git diff`, and
 
 Required environment:
 
-- .NET SDK 8+
+- .NET SDK 8.x
 - Sephiria's Mono `Managed` assemblies
 - BepInEx 5 core assemblies
 

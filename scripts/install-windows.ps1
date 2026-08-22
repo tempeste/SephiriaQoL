@@ -37,7 +37,7 @@ function Test-DotNet8Sdk {
 
     try {
         $InstalledSdks = & $Command --list-sdks 2>$null
-        return [bool]($InstalledSdks | Where-Object { $_ -match '^(8|9|[1-9][0-9])\.' } | Select-Object -First 1)
+        return [bool]($InstalledSdks | Where-Object { $_ -match '^8\.' } | Select-Object -First 1)
     }
     catch {
         return $false
@@ -54,6 +54,8 @@ function Install-DotNet8Sdk {
     $InstallDir = Join-Path $LocalAppData "Microsoft\dotnet"
     $InstalledCommand = Join-Path $InstallDir "dotnet.exe"
     if (Test-DotNet8Sdk -Command $InstalledCommand) {
+        $env:DOTNET_ROOT = $InstallDir
+        $env:PATH = "$InstallDir;$env:PATH"
         return $InstalledCommand
     }
 
@@ -136,9 +138,16 @@ try {
     $env:SEPHIRIA_MANAGED_DIR = $ManagedDir
 
     Write-Host "Building Sephiria QoL..."
-    & $DotNetCommand build (Join-Path $RepoDir "src\SephiriaQoL\SephiriaQoL.csproj") -c Release
-    if ($LASTEXITCODE -ne 0) {
-        throw "The QoL build failed with exit code $LASTEXITCODE."
+    Push-Location $RepoDir
+    try {
+        & $DotNetCommand build ".\src\SephiriaQoL\SephiriaQoL.csproj" -c Release
+        $BuildExitCode = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
+    if ($BuildExitCode -ne 0) {
+        throw "The QoL build failed with exit code $BuildExitCode."
     }
 
     $PluginDir = Join-Path $GameDir "BepInEx\plugins"

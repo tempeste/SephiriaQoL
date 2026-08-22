@@ -87,7 +87,9 @@ Prerequisites:
 The one-step Windows and macOS installers automatically install a user-scoped
 .NET 8 SDK when a suitable SDK is missing. They also install BepInEx 5 when it
 is missing. A manual .NET installation is only required when building without
-the installer scripts.
+the installer scripts. Later major SDKs are not substituted for .NET 8 because
+this Unity Mono build targets the .NET Standard 2.1 reference pack; the SDKs can
+remain installed side by side.
 
 MelonLoader is not used or required. The spectator feature is already part of
 `SephiriaQoL.dll`; do not install the upstream MelonLoader `Spectator.dll`.
